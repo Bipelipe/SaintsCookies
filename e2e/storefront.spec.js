@@ -54,3 +54,47 @@ test('desktop and mobile layouts load images and have no horizontal overflow', a
     await page.screenshot({ path: `/tmp/saints-${width}.png`, fullPage: true });
   }
 });
+
+test('categories stay accessible within the catalog and leave before the brand story', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  for (const width of [1440, 768, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    await page.evaluate(() => {
+      const card = document.querySelectorAll('.product-card')[3];
+      window.scrollTo(0, card.getBoundingClientRect().top + window.scrollY - 210);
+    });
+    const header = page.locator('.header');
+    const toolbar = page.locator('.catalog-toolbar');
+    const headerBottom = (await header.boundingBox()).height;
+    await expect.poll(async () => (await toolbar.boundingBox()).y).toBe(headerBottom);
+
+    await page.getByRole('button', { name: 'Especiais', exact: true }).click();
+    await expect(page.locator('.product-card')).toHaveCount(1);
+    await expect(page.locator('.product-card h3')).toHaveText('Pistache dos céus');
+    await expect.poll(async () => (await toolbar.boundingBox()).y).toBe(headerBottom);
+    const toolbarBox = await toolbar.boundingBox();
+    const productBox = await page.locator('.product-card').boundingBox();
+    expect(productBox.y).toBeGreaterThanOrEqual(toolbarBox.y + toolbarBox.height);
+    expect(productBox.y).toBeLessThan(350);
+
+    await page.getByRole('button', { name: 'Bem recheados', exact: true }).click();
+    await expect(page.locator('.product-card')).toHaveCount(3);
+    await expect(page.getByRole('button', { name: 'Bem recheados', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await page.getByRole('button', { name: 'Adicionar Chocolate & avelã à sacola', exact: true }).click();
+    await page.getByRole('button', { name: 'Abrir sacola' }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.getByRole('button', { name: 'Fechar sacola' }).click();
+
+    await page.evaluate(() => {
+      const story = document.querySelector('#essencia');
+      const header = document.querySelector('.header');
+      window.scrollTo(0, story.getBoundingClientRect().top + window.scrollY - header.getBoundingClientRect().height);
+    });
+    await expect.poll(async () => {
+      const box = await toolbar.boundingBox();
+      return box.y + box.height;
+    }).toBeLessThanOrEqual(headerBottom);
+    await expect.poll(async () => (await header.boundingBox()).y).toBe(0);
+  }
+});

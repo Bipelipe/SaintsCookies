@@ -34,7 +34,15 @@ nav { font-size: 15px; }
 .product-info p { max-width: none; }
 .filter { font-size: 14px; padding: 11px 16px; }
 .filter span, .made-order { font-size: 12px; }
-.catalog-toolbar { flex-wrap: wrap; }
+.catalog-toolbar {
+  position: sticky;
+  top: var(--header-height);
+  z-index: 9;
+  flex-wrap: wrap;
+  padding-block: 14px;
+  background: var(--cream);
+  box-shadow: 0 1px 0 var(--line);
+}
 .product-title { flex-wrap: wrap; }
 .product-title h3, .steps h3 { font-size: 23px; }
 .product-title > span { font-size: 15px; }

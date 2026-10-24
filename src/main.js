@@ -55,10 +55,21 @@ document.addEventListener('click', async event => {
     save(); notify(`${p.name} adicionado à sacola ♡`);
   }
   const button = event.target.closest('[data-filter]');
-  if (button) {
+  if (button && button.dataset.filter !== filter) {
+    const toolbar = $('.catalog-toolbar');
+    const headerHeight = $('.header').getBoundingClientRect().height;
+    const wasPinned = toolbar.getBoundingClientRect().top <= headerHeight + 1;
     filter = button.dataset.filter;
     document.querySelectorAll('[data-filter]').forEach(b => { b.classList.toggle('active', b === button); b.setAttribute('aria-pressed', String(b === button)); });
     renderProducts();
+    if (wasPinned) {
+      // A shorter category must not leave the visitor past its first cookies.
+      const gridTop = $('#product-grid').getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({
+        top: gridTop - headerHeight - toolbar.getBoundingClientRect().height - 12,
+        behavior: 'instant',
+      });
+    }
   }
   const quantity = event.target.closest('[data-quantity]');
   if (quantity) {
