@@ -1,6 +1,7 @@
 export async function databaseHealth(env) {
   const bindings = Object.entries(env)
-    .filter(([,value]) => value && typeof value.prepare === 'function' && typeof value.batch === 'function')
+    // Service Fetchers can expose arbitrary RPC methods; they are not D1.
+    .filter(([,value]) => value && typeof value.fetch !== 'function' && typeof value.prepare === 'function' && typeof value.batch === 'function' && typeof value.exec === 'function')
     .map(([name]) => name);
   const diagnostic = {
     expected_binding: 'DB',

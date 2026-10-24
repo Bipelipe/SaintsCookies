@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { databaseHealth } from '../worker/health.js';
 
-const binding = first => ({ prepare: () => ({ first }), batch() {} });
+const binding = first => ({ prepare: () => ({ first }), batch() {}, exec() {} });
 test('diagnoses a wrong D1 binding name without exposing environment values', async () => {
   const result = await databaseHealth({
     db: binding(async () => null),
+    ASSETS: new Proxy({ fetch() {} }, { get: (target,key) => target[key] || (() => {}) }),
     INTERNAL_TOKEN: 'do-not-expose-this-value',
     CF_PAGES_BRANCH: 'creditos', CF_PAGES_COMMIT_SHA: 'public-commit',
   });
