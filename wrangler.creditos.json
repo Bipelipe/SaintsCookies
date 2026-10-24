@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "saintscookies-creditos",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-10-24",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "vars": { "ENVIRONMENT": "test" },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "saintscookies-creditos",
+    "database_id": "0e7de326-abe6-4f13-921f-6d2d1d107d47",
+    "migrations_dir": "migrations"
+  }]
+}

@@ -1,0 +1,26 @@
+name: Test creditos
+on:
+  push:
+    branches: [creditos]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    if: github.ref == 'refs/heads/creditos'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:creditos
+      - run: npm run build -- --base=/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: creditos-frontend
+          path: dist

@@ -4,6 +4,7 @@ import '@fontsource/dm-sans/latin-600.css';
 import '@fontsource/playfair-display/latin-400.css';
 import '@fontsource/playfair-display/latin-400-italic.css';
 import './style.css';
+import './creditos.css';
 import { products, money, total, orderText } from './products.js';
 
 let bag = {};

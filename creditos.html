@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#fbf9f4">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="same-origin">
+  <link rel="icon" href="/favicon-round.ico">
+  <title>Clube Saints’ — Seus pontos de felicidade</title>
+</head>
+<body class="credits-page">
+  <div class="announcement">CLUBE SAINTS’ · AMBIENTE DE TESTES</div>
+  <header class="header credits-header">
+    <a class="brand" href="./index.html" aria-label="Saints’ Cookies, início"><span>saints’<small>COOKIES</small></span></a>
+    <a class="credits-back" href="./index.html#sabores">← Voltar aos cookies</a>
+    <button id="sign-out" class="button button-outline" hidden>Sair da conta</button>
+  </header>
+  <main class="credits-main">
+    <div class="credits-intro"><p class="eyebrow">CADA COMPRA, UM POUQUINHO MAIS PERTO</p><h1>Seu carinho vira<br><em>recompensa.</em></h1><p>R$ 1 confirmado pela equipe = 1 ponto.<br>Os centavos não geram frações: R$ 12,90 = 12 pontos.<br>Acumule momentos gostosos e escolha seu próximo mimo.</p></div>
+    <p class="test-notice">Esta é uma versão de testes. Compras e brindes cadastrados aqui são demonstrativos, sem pagamento ou entrega reais. Seus pontos só entram após a conferência manual da equipe.</p>
+    <div id="feedback" role="status" aria-live="polite"></div>
+    <section id="auth-panel" class="auth-card" hidden aria-label="Acesso ao Clube Saints’">
+      <div class="auth-tabs" role="group" aria-label="Acesso"><button class="active" data-auth="login" aria-pressed="true">Entrar</button><button data-auth="register" aria-pressed="false">Criar minha conta</button></div>
+      <h2 id="auth-title">Bom ter você <em>por aqui.</em></h2>
+      <form id="auth-form">
+        <label id="name-field" hidden>Seu nome<input name="name" autocomplete="name" minlength="2" maxlength="80"></label>
+        <label>E-mail<input name="email" type="email" autocomplete="username" maxlength="254" required></label>
+        <label>Senha<input name="password" type="password" autocomplete="current-password" minlength="12" maxlength="128" required></label>
+        <p class="field-help">Use uma senha de pelo menos 12 caracteres. Nesta versão de testes, ainda não há recuperação de senha por e-mail.</p>
+        <button class="button button-primary" type="submit" id="auth-submit">Entrar no clube <svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></button>
+      </form>
+    </section>
+    <section id="account-panel" hidden aria-label="Minha conta">
+      <div class="account-welcome"><div><p class="eyebrow">SEU CANTINHO NO CLUBE</p><h2>Olá, <em id="customer-name"></em></h2></div><div><p id="customer-email"></p><button class="text-link refresh-account" id="refresh-account">Atualizar meu saldo</button></div></div>
+      <div class="account-columns">
+        <article class="balance-card"><p class="eyebrow">SEU SALDO DISPONÍVEL</p><p class="balance-number"><span id="balance">0</span><span>pontos</span></p><p id="next-reward"></p><a href="#rewards" class="text-link">Escolher meu mimo <svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></a></article>
+        <article class="purchase-card"><h3>Já fez uma compra?</h3><p>Registre o valor e uma identificação do pedido. A equipe vai conferir a compra antes de liberar seus pontos.</p><form id="purchase-form"><label>Valor da compra (R$)<input name="amount" inputmode="decimal" placeholder="Ex.: 50,00" required></label><label>Identificação do pedido<input name="note" maxlength="200" placeholder="Ex.: pedido combinado no Instagram" required></label><button class="button button-primary" type="submit">Enviar para conferência <svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></button></form></article>
+      </div>
+      <section class="credits-section" id="rewards"><p class="eyebrow">ESCOLHA SEU PRÓXIMO MOMENTO</p><h2>Pequenos mimos.<br><em>Grandes sorrisos.</em></h2><div id="rewards-list" class="rewards-list"></div></section>
+      <div class="history-columns"><section class="history-card"><h3>Suas compras</h3><div id="orders-list"></div></section><section class="history-card"><h3>Histórico de pontos</h3><div id="entries-list"></div></section><section class="history-card"><h3>Seus resgates</h3><div id="redemptions-list"></div></section></div>
+    </section>
+    <section id="admin-panel" class="admin-panel" hidden aria-label="Painel administrativo"><p class="eyebrow">ÁREA EXCLUSIVA DA EQUIPE</p><div class="admin-heading"><h2>Conferir e <em>cuidar.</em></h2><button class="button button-outline" id="refresh-admin">Atualizar painel</button></div><p class="field-help">Confirme apenas compras verificadas. Use uma referência única de venda ou comprovante; a mesma referência não pode pontuar duas vezes. Valores com centavos geram pontos sobre os reais inteiros (R$ 12,90 = 12 pontos).</p><h3>Compras para conferência</h3><div id="admin-orders"></div><h3>Brindes para entrega</h3><div id="admin-redemptions"></div></section>
+  </main>
+  <footer><a class="brand" href="./index.html"><span>saints’<small>COOKIES</small></span></a><p>Um clube feito de carinho.</p><a href="https://www.instagram.com/saintscookies/" target="_blank" rel="noopener noreferrer">Falar com a Saints’ <svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></a></footer>
+  <script type="module" src="/src/creditos.js"></script>
+</body>
+</html>

@@ -2,6 +2,10 @@
 
 Frontend responsivo de catálogo de cookies artesanais, com identidade em creme, dourado e rosa suave inspirada no Instagram da marca.
 
+## Fidelidade em testes — branch creditos
+
+A branch `creditos` inclui login, cadastro, D1, confirmação manual de compras, pontos, brindes e painel administrativo. Ela usa um Worker e banco separados (`saintscookies-creditos`). Consulte [o guia de instalação, publicação e testes](docs/CREDITOS.md). O frontend sozinho no GitHub Pages não executa essa API.
+
 ## Executar
 
 Requer Node.js 20.19+ ou 22.12+ (validado com Node 24).
