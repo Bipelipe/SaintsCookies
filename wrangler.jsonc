@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "saintscookies",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-10-24",
+  // Only Pages previews receive the test database. Production has no D1 here.
+  "env": {
+    "preview": {
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "saintscookies-creditos",
+          "database_id": "0e7de326-abe6-4f13-921f-6d2d1d107d47"
+        }
+      ]
+    }
+  }
+}

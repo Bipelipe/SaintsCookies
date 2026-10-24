@@ -61,9 +61,15 @@ O projeto existente é `saintscookies`. A produção continua na branch `main`; 
 
 O diretório `functions/api/` é compilado automaticamente pelo Pages, junto do site. A API usa a mesma implementação já testada no Worker. `public/_routes.json` limita a execução das Functions a `/api/*`; os demais arquivos continuam estáticos. Não use `credits:deploy` como comando de build do Pages.
 
-### 1. Conectar o banco apenas à prévia
+### 1. Vínculo do banco gerenciado pela branch
 
-Cloudflare → **Workers & Pages → saintscookies → Settings → Bindings**. Selecione o ambiente **Preview**, adicione **D1 database binding** e preencha:
+O arquivo `wrangler.jsonc` configura automaticamente o vínculo **DB** em **env.preview**, apontando para o D1 `saintscookies-creditos`. Ao publicar esta branch pelo Pages, a Cloudflare usa esse arquivo como fonte da configuração de Functions da prévia. O banco não está declarado no ambiente de produção.
+
+Isso elimina a necessidade de repetir a configuração no painel. Como a configuração do Pages agora é versionada, alterações futuras desse vínculo devem ser feitas em `wrangler.jsonc`, somente na branch `creditos` até autorização de merge. Não substituir este arquivo pela configuração do Worker alternativo (`wrangler.creditos.json`).
+
+Para conferir no painel, o vínculo esperado é:
+
+Cloudflare → **Workers & Pages → saintscookies → Settings → Bindings → Preview**.
 
 | Campo | Valor |
 | --- | --- |
@@ -71,7 +77,7 @@ Cloudflare → **Workers & Pages → saintscookies → Settings → Bindings**. 
 | D1 database | `saintscookies-creditos` |
 | Database ID esperado | `0e7de326-abe6-4f13-921f-6d2d1d107d47` |
 
-Essa configuração é feita no painel e não substitui os vínculos do projeto por um arquivo Wrangler genérico. Não adicione o banco de testes ao ambiente Production.
+O arquivo define exclusivamente o D1 da prévia; o identificador não é uma credencial. Não adicione o banco de testes ao ambiente Production.
 
 ### 2. Inicializar as tabelas no Console D1
 
@@ -83,7 +89,7 @@ Esse SQL é gerado a partir da primeira migração por `npm run credits:sql`. N�
 
 ### 3. Refazer o deploy da prévia
 
-Salve o binding e faça **Retry deployment** da branch `creditos` no projeto Pages, pois o vínculo do banco só é aplicado a um novo deploy. Não refaça o deploy da produção para testar essa feature.
+Um push na branch `creditos` aplica o vínculo em um novo deploy. Se a configuração ou a inicialização do banco tiverem sido ajustadas depois de um deploy, faça **Retry deployment** da branch `creditos`. Não refaça o deploy da produção para testar essa feature.
 
 Verifique `https://creditos.saintscookies.pages.dev/api/health`. O resultado esperado é JSON com `status: ok` e `environment: test`.
 
