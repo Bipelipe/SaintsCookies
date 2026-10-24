@@ -1,4 +1,5 @@
 import { hashPassword, verifyPassword, randomToken, digest, sessionToken, sessionCookie } from './security.js';
+import { databaseHealth } from './health.js';
 
 class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status; }
@@ -63,13 +64,16 @@ async function account(db, user) {
 }
 async function api(request, env) {
   const db = env.DB;
-  if (!db) fail(503, 'O banco de créditos ainda não foi conectado.');
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/$/, '');
   const method = request.method;
+  if (path === '/api/health' && method === 'GET') {
+    const health = await databaseHealth(env);
+    return json(health.data,health.status);
+  }
+  if (!db) fail(503, 'O banco de créditos ainda não foi conectado.');
   if (!['GET', 'POST'].includes(method)) fail(405, 'Método não permitido.');
   if (method === 'POST' && request.headers.get('Origin') !== url.origin) fail(403, 'Origem da solicitação não permitida.');
-  if (path === '/api/health' && method === 'GET') { await db.prepare('SELECT 1 FROM users LIMIT 1').first(); return json({ status: 'ok', environment: 'test' }); }
   if (path === '/api/rewards' && method === 'GET') return json({ rewards: await rewards(db) });
   if (path === '/api/auth/register' && method === 'POST') {
     await rateLimit(request, db, 'register');

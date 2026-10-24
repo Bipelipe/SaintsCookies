@@ -91,6 +91,8 @@ Verifique `https://creditos.saintscookies.pages.dev/api/health`. O resultado esp
 - Erro informando banco não conectado: o binding `DB` ainda não foi aplicado ao Preview/redeploy.
 - Erro após conectar o banco: confira a execução do SQL inicial e os logs da Function.
 
+O diagnóstico também informa `expected_binding` (`DB`), `database_bindings` (somente nomes de vínculos D1, sem valores/credenciais) e `deployment.branch`/`deployment.commit`. Assim é possível distinguir uma publicação antiga, um vínculo com nome diferente e um banco ainda sem tabelas. `binding_missing` indica falta do vínculo correto; `initialization_required` indica tabelas faltando. O estado `ok` valida todas as tabelas usadas pela API, sem consultar registros de clientes.
+
 Depois, abra `/creditos`, cadastre sua conta e use a seção **Criar o administrador no banco remoto** abaixo.
 
 ### Testar o Pages localmente
