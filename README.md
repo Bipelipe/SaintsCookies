@@ -4,7 +4,7 @@ Frontend responsivo de catálogo de cookies artesanais, com identidade em creme,
 
 ## Fidelidade em testes — branch creditos
 
-A branch `creditos` inclui login, cadastro, D1, confirmação manual de compras, pontos, brindes e painel administrativo. Ela usa um Worker e banco separados (`saintscookies-creditos`). Consulte [o guia de instalação, publicação e testes](docs/CREDITOS.md). O frontend sozinho no GitHub Pages não executa essa API.
+A branch `creditos` inclui login, cadastro, D1, confirmação manual de compras, pontos, brindes e painel administrativo. A prévia `creditos.saintscookies.pages.dev` usa Pages Functions e o banco de testes `saintscookies-creditos`; a opção de Worker separado também está disponível. Consulte [o guia de instalação, publicação e testes](docs/CREDITOS.md). O frontend sozinho no GitHub Pages não executa essa API.
 
 ## Executar
 

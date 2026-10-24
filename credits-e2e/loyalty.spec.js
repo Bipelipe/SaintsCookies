@@ -145,6 +145,13 @@ test('loyalty screens fit mobile and allow keyboard login', async ({ page }) => 
   await expect(page.getByLabel('Senha', { exact:true })).toBeFocused();
 });
 
+test('a missing API shows a clear message instead of treating HTML as an account', async ({ page }) => {
+  await page.route('**/api/account', route=>route.fulfill({status:200,contentType:'text/html',body:'<!doctype html><title>Loja estática</title>'}));
+  await page.goto('/creditos.html');
+  await expect(page.locator('#feedback')).toContainText('O clube ainda não está disponível neste endereço');
+  await expect(page.locator('#auth-panel')).toBeVisible();
+});
+
 test('the last reward cannot be reserved by two different customers', async ({ playwright }) => {
   const a = await client(playwright,'stock-a'), b = await client(playwright,'stock-b');
   const admin = await client(playwright,'stock-admin',true);

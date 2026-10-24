@@ -1,6 +1,6 @@
 # Working agreement
 
-- Current explicit exception: implement the manual-purchase loyalty system on `creditos`, deployed only to the separate `saintscookies-creditos` Worker and D1 database. Do not merge this work into `preview` or `main` without the user's instruction. Normal website review work remains on `preview`.
+- Current explicit exception: implement the manual-purchase loyalty system on `creditos`. The user chose the existing Cloudflare Pages project `saintscookies`, using Pages Functions and its Preview-only `DB` binding to D1 `saintscookies-creditos`. Keep the standalone Worker option available, but the current deployment target is the Pages preview of `creditos`. Do not merge this work into `preview` or `main` without the user's instruction. Normal website review work remains on `preview`.
 
 - The user wants all future website changes on the `preview` branch. Check the current branch before editing. Use the existing checkout; do not create a Git worktree unless explicitly requested.
 - Commit and push requested changes to `origin/preview`, after appropriate validation, so the user can review them separately from production.

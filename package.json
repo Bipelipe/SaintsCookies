@@ -15,7 +15,10 @@
     "credits:build": "npm run build -- --base=/ && node scripts/configure-creditos.mjs",
     "credits:deploy": "node scripts/deploy-creditos.mjs",
     "credits:admin": "node scripts/promote-admin.mjs",
-    "test:creditos": "playwright test --config playwright.creditos.config.js"
+    "test:creditos": "playwright test --config playwright.creditos.config.js",
+    "credits:pages:dev": "node scripts/local-pages-creditos.mjs",
+    "credits:sql": "node scripts/generate-d1-console.mjs",
+    "test:creditos:pages": "playwright test --config playwright.pages-creditos.config.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",

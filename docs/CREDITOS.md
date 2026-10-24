@@ -1,6 +1,6 @@
 # Créditos — teste de fidelidade
 
-Esta implementação vive apenas na branch `creditos`. Ela usa um **Worker separado** chamado `saintscookies-creditos` e um banco D1 com o mesmo nome. Não é publicada no GitHub Pages: login, sessões e pontos exigem a API do Worker. Não fazer merge em `main` ou `preview` sem autorização.
+Esta implementação vive apenas na branch `creditos`. O destino escolhido agora é a **prévia do Pages `saintscookies`**, com **Pages Functions** para a API e o banco D1 **saintscookies-creditos**. A opção de Worker separado também continua disponível. GitHub Pages não executa essa API. Não fazer merge em `main` ou `preview` sem autorização.
 
 ## O que já funciona
 
@@ -42,13 +42,68 @@ Atualize a página/entre novamente. Cadastro pela API nunca permite escolher o p
 1. Cloudflare → **Storage & databases → D1 → Create database**.
 2. Nome: **saintscookies-creditos**.
 3. Copie o **Database ID**. Esse UUID identifica o banco; não é senha ou token.
-4. Não crie as tabelas manualmente: o script de deploy aplica `migrations/0001_loyalty.sql` e registra a migração, sem apagar dados.
+4. Para o Pages, siga a inicialização no Console abaixo. Na opção alternativa de Worker separado, o script de deploy aplica a migração automaticamente.
 
 O banco criado pelo usuário tem ID `0e7de326-abe6-4f13-921f-6d2d1d107d47`, registrado em `wrangler.creditos.json`. O UUID não é uma credencial. Os comandos com `--local` continuam usando exclusivamente o emulador local, mesmo com esse ID.
 
 A configuração remota é gerada em `wrangler.creditos.remote.json`, ignorada pelo Git. A variável opcional `D1_DATABASE_ID` pode substituir o ID configurado se for necessário usar outro banco de testes. IDs ausentes ou de demonstração são recusados.
 
-## Publicar no Worker separado, a partir da branch creditos
+## Usar o Pages já publicado — opção escolhida
+
+O projeto existente é `saintscookies`. A produção continua na branch `main`; a versão de testes fica na branch `creditos`.
+
+- Endereço estável de testes: `https://creditos.saintscookies.pages.dev/creditos`.
+- Endereços que começam por um hash, como `65e39191.saintscookies.pages.dev`, são publicações específicas. Use o alias da branch para acompanhar os próximos commits.
+- Build command: `npm run build -- --base=/`.
+- Build output directory: `dist`.
+- Root directory: vazio.
+- `NODE_VERSION=24`.
+
+O diretório `functions/api/` é compilado automaticamente pelo Pages, junto do site. A API usa a mesma implementação já testada no Worker. `public/_routes.json` limita a execução das Functions a `/api/*`; os demais arquivos continuam estáticos. Não use `credits:deploy` como comando de build do Pages.
+
+### 1. Conectar o banco apenas à prévia
+
+Cloudflare → **Workers & Pages → saintscookies → Settings → Bindings**. Selecione o ambiente **Preview**, adicione **D1 database binding** e preencha:
+
+| Campo | Valor |
+| --- | --- |
+| Variable name | `DB` (maiúsculas) |
+| D1 database | `saintscookies-creditos` |
+| Database ID esperado | `0e7de326-abe6-4f13-921f-6d2d1d107d47` |
+
+Essa configuração é feita no painel e não substitui os vínculos do projeto por um arquivo Wrangler genérico. Não adicione o banco de testes ao ambiente Production.
+
+### 2. Inicializar as tabelas no Console D1
+
+Cloudflare → **D1 → saintscookies-creditos → Console**. Copie e execute todo o conteúdo de [`CREDITOS-D1-INICIAL.sql`](CREDITOS-D1-INICIAL.sql).
+
+O arquivo cria as tabelas, os três brindes de demonstração e o histórico da primeira migração. Pode ser executado novamente: usa `IF NOT EXISTS`/`INSERT OR IGNORE`, sem apagar clientes, alterar seus pontos ou restaurar o estoque já consumido.
+
+Esse SQL é gerado a partir da primeira migração por `npm run credits:sql`. Não edite o arquivo gerado isoladamente. Novas alterações de schema devem usar novas migrações.
+
+### 3. Refazer o deploy da prévia
+
+Salve o binding e faça **Retry deployment** da branch `creditos` no projeto Pages, pois o vínculo do banco só é aplicado a um novo deploy. Não refaça o deploy da produção para testar essa feature.
+
+Verifique `https://creditos.saintscookies.pages.dev/api/health`. O resultado esperado é JSON com `status: ok` e `environment: test`.
+
+- HTML nessa rota: essa publicação ainda não possui as Functions.
+- Erro informando banco não conectado: o binding `DB` ainda não foi aplicado ao Preview/redeploy.
+- Erro após conectar o banco: confira a execução do SQL inicial e os logs da Function.
+
+Depois, abra `/creditos`, cadastre sua conta e use a seção **Criar o administrador no banco remoto** abaixo.
+
+### Testar o Pages localmente
+
+```sh
+npm run credits:prepare
+npm run credits:pages:dev
+npm run test:creditos:pages
+```
+
+O teste de Pages inicializa um banco descartável usando exatamente o SQL do Console. Ele exercita o mesmo cadastro, confirmação, resgate e proteção de permissões do Worker.
+
+## Alternativa: publicar no Worker separado
 
 Cloudflare → **Workers & Pages → Create application → conexão com GitHub**. Use:
 
@@ -77,7 +132,7 @@ Após o deploy:
 
 ## Criar o administrador no banco remoto
 
-1. Cadastre sua conta em `/creditos.html` no Worker de testes.
+1. Cadastre sua conta em `/creditos` na prévia do Pages (ou `/creditos.html` na alternativa de Worker de testes).
 2. Cloudflare → **D1 → saintscookies-creditos → Console**.
 3. Execute, substituindo pelo e-mail exato da conta cadastrada:
 
@@ -108,4 +163,4 @@ npm run test:creditos
 
 Para usar o Chromium do ambiente: `CHROMIUM_PATH=/usr/bin/chromium npm run test:creditos`. Fora desse ambiente, instale o navegador com `npx playwright install chromium`.
 
-O workflow `Test creditos` testa o banco local e o fluxo completo, mas **não publica nem cria banco na conta Cloudflare**. A publicação ocorre na integração Git do Worker separado, após a configuração acima. Não declarar o banco remoto criado ou o site publicado apenas porque os testes locais passaram.
+O workflow `Test creditos` testa o banco local e o fluxo completo em **Worker e Pages Functions**, mas **não inicializa o banco da conta Cloudflare**. A integração Git do Pages publica automaticamente a branch; o binding e a inicialização do D1 remoto precisam ser configurados conforme acima. Não declarar o banco remoto pronto apenas porque os testes locais passaram.
