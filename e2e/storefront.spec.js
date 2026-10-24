@@ -39,10 +39,15 @@ test('selection can be copied for a real conversation', async ({ page, context }
 });
 
 test('desktop and mobile layouts load images and have no horizontal overflow', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   for (const width of [1440, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
     await page.locator('footer').scrollIntoViewIfNeeded();
+    await expect.poll(async () => (await page.locator('.header').boundingBox()).y).toBe(0);
+    await page.getByRole('button', { name: 'Abrir sacola' }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.getByRole('button', { name: 'Fechar sacola' }).click();
     await expect.poll(() => page.locator('img').evaluateAll(images => images.every(img => img.complete && img.naturalWidth > 0))).toBe(true);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await page.evaluate(() => window.scrollTo(0, 0));

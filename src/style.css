@@ -6,3 +6,85 @@
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}}
 
 .arrow-icon{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;display:inline-block;vertical-align:middle;flex-shrink:0}.illustrative-note{display:inline-block;margin-top:10px;font-size:9px;color:#958875}.instagram-checkout .arrow-icon,footer .arrow-icon{width:12px;height:12px;margin-left:5px}.product-image{height:auto;aspect-ratio:1}@media(max-width:760px){h1{font-size:clamp(43px,12.3vw,61px)}}
+
+/* Keep navigation available and section headings clear of the sticky header. */
+:root { --header-height: 106px; }
+html { scroll-padding-top: calc(var(--header-height) + 24px); }
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  max-width: none;
+  height: var(--header-height);
+  padding-inline: max(54px, calc((100% - 1212px) / 2));
+  background: var(--cream);
+  box-shadow: 0 1px 0 var(--line);
+}
+
+/* Comfortable reading sizes for descriptions, controls and supporting text. */
+.announcement { font-size: 11px; letter-spacing: 1.5px; }
+nav { font-size: 15px; }
+.bag-button, .button { font-size: 14px; }
+.bag-count { font-size: 12px; min-width: 26px; height: 26px; }
+.eyebrow, .hero .eyebrow, .section-heading .eyebrow, .how > .eyebrow { font-size: 12px; letter-spacing: 1.5px; }
+.hero-description, .essence-copy > p:not(.eyebrow) { font-size: 16px; }
+.hero-note { font-size: 13px; line-height: 1.7; }
+.image-caption, .image-caption span { font-size: 12px; }
+.section-heading > p, .product-info p, .steps p, .text-link { font-size: 15px; }
+.product-info p { max-width: none; }
+.filter { font-size: 14px; padding: 11px 16px; }
+.filter span, .made-order { font-size: 12px; }
+.catalog-toolbar { flex-wrap: wrap; }
+.product-title { flex-wrap: wrap; }
+.product-title h3, .steps h3 { font-size: 23px; }
+.product-title > span { font-size: 15px; }
+.product-badge { font-size: 11px; }
+.product-detail { font-size: 11px; line-height: 1.7; letter-spacing: .8px; }
+.catalog-note { font-size: 14px; line-height: 1.8; }
+.illustrative-note { font-size: 12px; }
+.social-banner .eyebrow { font-size: 11px; }
+footer > p, footer > a:last-child { font-size: 14px; }
+footer > small { font-size: 12px; }
+.drawer-heading .eyebrow { font-size: 11px; }
+.sample-notice, .checkout-note, .bag-item p, .bag-item > strong, .quantity span { font-size: 14px; }
+.bag-item h3 { font-size: 20px; }
+.quantity button { min-width: 36px; min-height: 36px; }
+.subtotal { font-size: 17px; }
+.instagram-checkout, .order-fallback, .empty-bag p { font-size: 15px; }
+.toast { font-size: 14px; line-height: 1.6; }
+
+@media (max-width: 1050px) {
+  .header { padding-inline: 32px; }
+  nav { gap: 22px; }
+  .hero .eyebrow { font-size: 11px; }
+  .hero-description .desktop-break { display: none; }
+}
+
+@media (max-width: 760px) {
+  :root { --header-height: 85px; }
+  .header { padding-inline: 20px; gap: 12px; }
+  .announcement { height: auto; min-height: 32px; padding: 7px 16px; font-size: 10px; letter-spacing: 1px; text-align: center; }
+  .bag-button { gap: 7px; font-size: 13px; }
+  .bag-label { display: inline; }
+  .hero .eyebrow, .section-heading .eyebrow, .how > .eyebrow { font-size: 11px; }
+  .hero-note { font-size: 13px; }
+  .filter { font-size: 13px; padding: 10px 13px; }
+  .product-title h3 { font-size: 21px; }
+  .product-info p { font-size: 14px; line-height: 1.8; }
+  .product-detail { font-size: 10px; }
+  .product-badge { font-size: 10px; letter-spacing: 0; }
+  .quick-add { width: 38px; height: 38px; }
+  .social-banner .button { font-size: 14px; }
+  .social-banner .eyebrow { font-size: 11px; line-height: 1.8; }
+  .steps p br { display: none; }
+  footer { gap: 18px 12px; }
+  footer .brand { min-width: calc(45% - 12px); }
+  footer > p { width: 55%; }
+}
+
+@media (max-width: 370px) {
+  .header { padding-inline: 16px; }
+  .product-grid { grid-template-columns: 1fr; gap: 30px; }
+  .product-title { flex-direction: row; align-items: center; }
+  .product-detail { font-size: 11px; }
+}
