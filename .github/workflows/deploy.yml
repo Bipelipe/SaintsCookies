@@ -2,7 +2,7 @@ name: Publish Saints Cookies
 
 on:
   push:
-    branches: [main]
+    branches: [main, preview]
   workflow_dispatch:
 
 permissions:
@@ -14,19 +14,46 @@ concurrency:
 
 jobs:
   build:
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/preview'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out the published version
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: production
+      - name: Check out the review version
+        uses: actions/checkout@v4
+        with:
+          ref: preview
+          path: review
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
-      - run: npm test
-      - run: npm run build
+          cache-dependency-path: |
+            production/package-lock.json
+            review/package-lock.json
+      - name: Build the published site from main
+        working-directory: production
+        run: |
+          npm ci
+          npm test
+          npm run build -- --base=/SaintsCookies/
+      - name: Build the preview from its branch
+        working-directory: review
+        run: |
+          npm ci
+          npm test
+          npm run build -- --base=/SaintsCookies/preview/
+      - name: Assemble both sites for GitHub Pages
+        run: |
+          mkdir -p site/preview
+          cp -a production/dist/. site/
+          cp -a review/dist/. site/preview/
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: site
 
   deploy:
     needs: build

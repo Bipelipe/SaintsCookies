@@ -23,9 +23,29 @@ Os arquivos de produção ficam em `dist/` e podem ser publicados em hospedagem 
 
 ## Publicação no GitHub Pages
 
-O workflow `.github/workflows/deploy.yml` testa, compila e publica automaticamente a cada push em `main`. No GitHub, configure **Settings → Pages → Build and deployment → Source → GitHub Actions**. O endereço esperado é `https://bipelipe.github.io/SaintsCookies/`.
+O workflow `.github/workflows/deploy.yml` testa, compila e publica automaticamente a cada push em `main` ou `preview`. No GitHub, configure **Settings → Pages → Build and deployment → Source → GitHub Actions**.
 
-O build usa o prefixo `/SaintsCookies/`, incluindo imagens carregadas pelo catálogo e pela sacola. Para publicar em outro endereço, ajuste `base` em `vite.config.js`.
+- Site principal, sempre compilado de `main`: `https://bipelipe.github.io/SaintsCookies/`.
+- Prévia, sempre compilada de `preview`: `https://bipelipe.github.io/SaintsCookies/preview/`.
+
+O GitHub Pages publica um único artefato por repositório. Por isso, o workflow reúne os dois builds, cada um em seu diretório, sem incorporar o código da prévia ao site principal.
+
+O ambiente de implantação `github-pages` precisa permitir as branches `main` e `preview`. Se houver restrições de branches, um administrador pode incluir `preview` em **Settings → Environments → github-pages → Deployment branches and tags**, preservando as regras existentes. Não são necessários novos tokens ou secrets.
+
+Enquanto este workflow existir apenas em `preview`, para uma execução manual em **Actions → Publish Saints Cookies → Run workflow**, escolha a branch `preview`. A configuração antiga em `main` só publica o site principal.
+
+## Fluxo de revisão
+
+Todas as próximas alterações devem ser feitas e enviadas à branch `preview`. O merge em `main` só deve ser feito com um comando explícito do usuário. A regra está registrada em `AGENTS.md`.
+
+Para testar o build da prévia localmente:
+
+```sh
+npm run build -- --base=/SaintsCookies/preview/
+npm run preview -- --base=/SaintsCookies/preview/
+```
+
+O build padrão usa o prefixo `/SaintsCookies/`, incluindo imagens carregadas pelo catálogo e pela sacola. O workflow fornece o prefixo específico de cada versão usando `--base`.
 
 ## Testes no navegador
 
