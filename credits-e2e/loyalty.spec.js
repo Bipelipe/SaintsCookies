@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 
 const origin = 'http://127.0.0.1:8788';
-const identity = label => ({ name: `Teste ${label}`, email: `${label}-${randomUUID()}@example.test`, password: `Teste-${randomUUID()}` });
+const identity = label => ({ name: `Teste ${label}`, email: `${label}-${randomUUID()}@example.test`, password: `Teste-${randomUUID()}`,phone:'11999999999',address:'Rua dos Testes, 123, Centro, São Paulo, SP',payment_preference:'pix' });
 async function client(playwright, label, admin = false) {
   const person = identity(label);
   const api = await playwright.request.newContext({ baseURL: origin, extraHTTPHeaders: { Origin: origin } });
@@ -24,7 +24,10 @@ test('customer and admin UI: pending purchase, manual confirmation, points, rewa
   const customer = identity('cliente-ui');
   await page.goto('/creditos.html');
   await page.getByRole('button', { name:'Criar minha conta', exact:true }).click();
-  await page.getByLabel('Seu nome').fill(customer.name);
+  await page.getByLabel('Seu nome', {exact:true}).fill(customer.name);
+  await page.getByLabel('Telefone do WhatsApp', {exact:true}).fill(customer.phone);
+  await page.getByLabel('Endereço completo', {exact:true}).fill(customer.address);
+  await page.getByLabel('Pagamento preferido', {exact:true}).selectOption('pix');
   await page.getByLabel('E-mail', { exact:true }).fill(customer.email);
   await page.getByLabel('Senha', { exact:true }).fill(customer.password);
   await page.locator('#auth-submit').click();

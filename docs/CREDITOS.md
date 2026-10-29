@@ -1,3 +1,5 @@
+> Atualização: esta branch também aceita encomendas pelo site, exige telefone, endereço e pagamento preferido no cadastro e prepara comprovantes automáticos pelo WhatsApp. Consulte [a tabela de configurações e tarefas externas](WHATSAPP-AUTOMATICO.md). Para um D1 já inicializado, execute [somente a atualização 0002](CREDITOS-D1-ATUALIZACAO-0002.sql).
+
 # Créditos — teste de fidelidade
 
 Esta implementação vive apenas na branch `creditos`. O destino escolhido agora é a **prévia do Pages `saintscookies`**, com **Pages Functions** para a API e o banco D1 **saintscookies-creditos**. A opção de Worker separado também continua disponível. GitHub Pages não executa essa API. Não fazer merge em `main` ou `preview` sem autorização.
@@ -13,7 +15,7 @@ Esta implementação vive apenas na branch `creditos`. O destino escolhido agora
 - Resgates descontam pontos e reservam estoque em uma transação. Administrador registra a entrega depois.
 - Repetir uma confirmação ou reenviar a mesma solicitação não duplica créditos/resgates. Uma referência de venda confirmada não pode ser usada em outra compra.
 
-São brindes e pontos demonstrativos. Não há pagamento, envio, recuperação de senha por e-mail, verificação de e-mail, cancelamento de compra já confirmada ou edição de brindes pelo painel nesta versão. O painel é atualizado pelo botão de atualizar; não há notificação automática de novos pedidos.
+São brindes e pontos demonstrativos. Não há cobrança automática, entrega física, recuperação de senha por e-mail, verificação de e-mail, cancelamento de compra já confirmada ou edição de brindes pelo painel nesta versão. O envio de comprovante por WhatsApp depende da configuração externa descrita no guia. O painel é atualizado pelo botão de atualizar; não há notificação automática de novos pedidos para a equipe. O cliente pode autorizar a confirmação automática pelo WhatsApp.
 
 ## Rodar na máquina de desenvolvimento
 

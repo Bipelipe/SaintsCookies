@@ -6,6 +6,8 @@ import '@fontsource/playfair-display/latin-400-italic.css';
 import './style.css';
 import './creditos.css';
 import { money } from './products.js';
+import { api } from './api.js';
+import { renderCommerce, renderAdminCheckouts, setupCommerce } from './account-commerce.js';
 
 const $ = selector => document.querySelector(selector);
 const arrow = '<svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg>';
@@ -19,15 +21,6 @@ function feedback(message, error = false) {
   $('#feedback').className = error ? 'feedback error' : 'feedback';
   $('#feedback').setAttribute('role', error ? 'alert' : 'status');
 }
-async function api(path, data) {
-  let response;
-  try { response = await fetch(`/api${path}`, { method: data ? 'POST' : 'GET', credentials: 'same-origin', headers: data ? { 'Content-Type': 'application/json' } : {}, body: data ? JSON.stringify(data) : undefined }); }
-  catch { throw new Error('Não foi possível conectar. Confira sua conexão e tente novamente.'); }
-  if (!response.headers.get('Content-Type')?.includes('application/json')) throw new Error('O clube ainda não está disponível neste endereço. Tente novamente mais tarde.');
-  const result = await response.json().catch(() => ({ error: 'O clube está indisponível no momento. Tente novamente mais tarde.' }));
-  if (!response.ok) { const error = new Error(result.error || 'Não foi possível concluir agora.'); error.status = response.status; throw error; }
-  return result;
-}
 function showAuth() {
   account = undefined;
   $('#auth-panel').hidden = false;
@@ -39,6 +32,7 @@ function renderAccount() {
   $('#customer-name').textContent = account.user.name;
   $('#customer-email').textContent = account.user.email;
   $('#balance').textContent = account.balance;
+  renderCommerce(account);
   const next = account.rewards.find(r => r.cost > account.balance && r.stock > 0);
   $('#next-reward').textContent = next ? `Faltam ${next.cost - account.balance} pontos para ${next.title.toLowerCase()}.` : 'Escolha um brinde disponível e combine a retirada com a equipe.';
   $('#rewards-list').innerHTML = account.rewards.map(r => `<article class="reward-card"><span class="reward-star" aria-hidden="true">✦</span><p class="eyebrow">${r.cost} PONTOS</p><h3>${escape(r.title)}</h3><p>${escape(r.description)}</p><p class="reward-stock">${r.stock > 0 ? `${r.stock} disponíveis neste teste` : 'Sem estoque no momento'}</p><button class="button button-primary" data-redeem="${escape(r.id)}" ${r.cost > account.balance || !r.stock ? 'disabled' : ''}>${r.stock ? r.cost > account.balance ? `Faltam ${r.cost - account.balance} pontos` : `Trocar meus pontos ${arrow}` : 'Esgotado'}</button></article>`).join('');
@@ -50,8 +44,9 @@ async function loadAdmin() {
   if (account?.user.role !== 'admin') { $('#admin-panel').hidden = true; return; }
   const data = await api('/admin/overview');
   $('#admin-panel').hidden = false;
+  renderAdminCheckouts(data);
   const pending = data.orders.filter(o => o.status === 'pending');
-  $('#admin-orders').innerHTML = pending.length ? pending.map(o => `<article class="admin-item"><h3>${escape(o.name)}</h3><p>${escape(o.email)} · informado: ${money(o.amount_cents/100)}</p><p>${escape(o.customer_note)} · ${date(o.created_at)}</p><form data-confirm="${o.id}"><label>Valor confirmado (R$)<input name="amount" inputmode="decimal" value="${(o.amount_cents/100).toFixed(2).replace('.', ',')}" required></label><label>Referência única da venda<input name="reference" placeholder="Ex.: venda-2026-001" minlength="3" maxlength="100" required></label><div class="admin-actions"><button type="submit" class="button button-primary">Confirmar compra e liberar pontos</button><button type="button" class="button button-outline" data-reject="${o.id}">Não aprovar</button></div></form></article>`).join('') : '<p class="empty-history">Tudo conferido! Nenhuma compra pendente.</p>';
+  $('#admin-orders').innerHTML = pending.length ? pending.map(o => { const web = data.checkouts.find(c => c.loyalty_order_id === o.id); return `<article class="admin-item"><h3>${escape(o.name)}</h3><p>${escape(o.email)} · informado: ${money(o.amount_cents/100)}</p><p>${escape(o.customer_note)} · ${date(o.created_at)}</p><form data-confirm="${o.id}"><label>Valor confirmado (R$)<input name="amount" inputmode="decimal" value="${(o.amount_cents/100).toFixed(2).replace('.', ',')}" ${web ? 'readonly' : ''} required></label><label>Referência única da venda<input name="reference" value="${web ? `web-${web.id}` : ''}" ${web ? 'readonly' : ''} placeholder="Ex.: venda-2026-001" minlength="3" maxlength="100" required></label><div class="admin-actions"><button type="submit" class="button button-primary">Confirmar compra e liberar pontos</button><button type="button" class="button button-outline" data-reject="${o.id}">Não aprovar</button></div></form></article>`; }).join('') : '<p class="empty-history">Tudo conferido! Nenhuma compra pendente.</p>';
   const gifts = data.redemptions.filter(r => r.status === 'pending');
   $('#admin-redemptions').innerHTML = gifts.length ? gifts.map(r => `<article class="admin-item"><h3>${escape(r.title)}</h3><p>${escape(r.name)} · ${escape(r.email)}</p><p>Código ${escape(r.id.slice(0,8).toUpperCase())} · ${r.points} pontos já descontados</p><button class="button button-primary" data-fulfill="${r.id}">Marcar como entregue</button></article>`).join('') : '<p class="empty-history">Nenhum brinde aguardando entrega.</p>';
 }
@@ -69,8 +64,8 @@ document.addEventListener('click', async event => {
   if (auth) {
     mode = auth.dataset.auth;
     document.querySelectorAll('[data-auth]').forEach(b => { b.classList.toggle('active', b === auth); b.setAttribute('aria-pressed', String(b === auth)); });
-    $('#name-field').hidden = mode !== 'register';
-    $('#name-field input').required = mode === 'register';
+    $('#registration-fields').hidden = mode !== 'register';
+    $('#registration-fields').disabled = mode !== 'register';
     $('#auth-form').elements.password.autocomplete = mode === 'register' ? 'new-password' : 'current-password';
     $('#auth-submit').innerHTML = `${mode === 'register' ? 'Criar minha conta' : 'Entrar no clube'} ${arrow}`;
     feedback('');
@@ -109,7 +104,7 @@ document.addEventListener('submit', async event => {
   try {
     const data = new FormData(form);
     if (form.id === 'auth-form') {
-      await api(`/auth/${mode}`, { name: data.get('name'), email: data.get('email'), password: data.get('password') });
+      await api(`/auth/${mode}`, Object.fromEntries(data));
       form.reset(); await load(); feedback('Bem-vindo ao Clube Saints’!');
     } else if (form.id === 'purchase-form') {
       purchaseKey ||= crypto.randomUUID();
@@ -122,4 +117,5 @@ document.addEventListener('submit', async event => {
   } catch (error) { feedback(error.message, true); if (error.status === 401) showAuth(); }
   finally { button.disabled = false; }
 });
+setupCommerce({ reload:load, feedback });
 load().catch(error => { showAuth(); feedback(error.message, true); });

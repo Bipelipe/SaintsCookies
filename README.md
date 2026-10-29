@@ -4,7 +4,7 @@ Frontend responsivo de catálogo de cookies artesanais, com identidade em creme,
 
 ## Fidelidade em testes — branch creditos
 
-A branch `creditos` inclui login, cadastro, D1, confirmação manual de compras, pontos, brindes e painel administrativo. A prévia `creditos.saintscookies.pages.dev` usa Pages Functions e o banco de testes `saintscookies-creditos`; a opção de Worker separado também está disponível. Consulte [o guia de instalação, publicação e testes](docs/CREDITOS.md). O frontend sozinho no GitHub Pages não executa essa API.
+A branch `creditos` inclui cadastro completo, D1, encomendas aceitas imediatamente, comprovante automático por WhatsApp mediante configuração, confirmação manual de pagamento/pontos, brindes e painel administrativo. Consulte [a tabela de informações e tarefas para ativar o WhatsApp](docs/WHATSAPP-AUTOMATICO.md). A prévia `creditos.saintscookies.pages.dev` usa Pages Functions e o banco de testes `saintscookies-creditos`; a opção de Worker separado também está disponível. Consulte [o guia de instalação, publicação e testes](docs/CREDITOS.md). O frontend sozinho no GitHub Pages não executa essa API.
 
 ## Executar
 
@@ -70,4 +70,4 @@ Para usar um Chromium já instalado: `CHROMIUM_PATH=/usr/bin/chromium npm run te
 
 ## Personalizar antes de lançar
 
-Os sabores, preços e pesos em `src/products.js` são sugestões ilustrativas. As imagens foram geradas para esta proposta, e o logotipo é uma interpretação tipográfica. Substitua-os pelos dados, fotos e identidade oficiais. O fluxo não processa pagamentos nem confirma pedidos: a disponibilidade, valores e entrega são combinados com a marca pelo Instagram. Os links de Instagram e Linktree seguem a referência enviada.
+Os sabores, preços e pesos em `src/products.js` são sugestões ilustrativas. As imagens foram geradas para esta proposta, e o logotipo é uma interpretação tipográfica. Substitua-os pelos dados, fotos e identidade oficiais. Em `main`, o fluxo de seleção é combinado pelo Instagram. Em `creditos`, o pedido é aceito no site, sem cobrança automática, com retirada e horário a combinar. Antes do uso comercial, configure catálogo, condições de atendimento e a integração descrita no guia do WhatsApp. Os links de Instagram e Linktree seguem a referência enviada.

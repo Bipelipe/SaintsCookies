@@ -1,5 +1,8 @@
 import { hashPassword, verifyPassword, randomToken, digest, sessionToken, sessionCookie } from './security.js';
 import { databaseHealth } from './health.js';
+import { validateProfile, profileFor, checkoutReady } from './profile.js';
+import { CheckoutError, acceptCheckout, listCheckouts } from './checkout.js';
+import { dispatchReceipt, whatsappConfigured, whatsappWebhook } from './whatsapp.js';
 
 class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status; }
@@ -60,7 +63,7 @@ async function account(db, user) {
     db.prepare('SELECT id, amount_cents, customer_note, status, points, created_at FROM orders WHERE user_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 50').bind(user.id),
     db.prepare('SELECT r.id, r.points, r.status, r.created_at, w.title FROM redemptions r JOIN rewards w ON w.id = r.reward_id WHERE r.user_id = ? ORDER BY r.created_at DESC, r.rowid DESC LIMIT 50').bind(user.id),
   ]);
-  return { user: publicUser(user), balance: rows[0].results[0].balance, entries: rows[1].results, orders: rows[2].results, redemptions: rows[3].results, rewards: await rewards(db) };
+  return { user: publicUser(user), profile: await profileFor(db,user.id), checkouts: await listCheckouts(db,user.id), balance: rows[0].results[0].balance, entries: rows[1].results, orders: rows[2].results, redemptions: rows[3].results, rewards: await rewards(db) };
 }
 async function api(request, env) {
   const db = env.DB;
@@ -72,18 +75,25 @@ async function api(request, env) {
     return json(health.data,health.status);
   }
   if (!db) fail(503, 'O banco de créditos ainda não foi conectado.');
+  if (path === '/api/whatsapp/webhook') return whatsappWebhook(request,env);
   if (!['GET', 'POST'].includes(method)) fail(405, 'Método não permitido.');
   if (method === 'POST' && request.headers.get('Origin') !== url.origin) fail(403, 'Origem da solicitação não permitida.');
+  if (path === '/api/checkout/config' && method === 'GET') return json({ ready:await checkoutReady(db), whatsapp_enabled:whatsappConfigured(env) });
   if (path === '/api/rewards' && method === 'GET') return json({ rewards: await rewards(db) });
   if (path === '/api/auth/register' && method === 'POST') {
     await rateLimit(request, db, 'register');
     const data = await body(request);
     const name = text(data.name, 80), email = text(data.email, 254).toLowerCase();
-    if (name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail(400, 'Informe seu nome e um e-mail válido.');
+    if (name.length < 2 || /[\x00-\x1f]/.test(name) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail(400, 'Informe seu nome e um e-mail válido.');
     if (typeof data.password !== 'string' || data.password.length < 12 || data.password.length > 128 || !data.password.trim()) fail(400, 'Use uma senha de 12 a 128 caracteres.');
+    if (!await checkoutReady(db)) fail(503,'O cadastro está sendo preparado. Tente novamente mais tarde ou fale com a Saints’.');
+    let profile; try { profile = validateProfile(data); } catch (error) { fail(400,error.message); }
     const user = { id: crypto.randomUUID(), name, email, role: 'customer' };
     const password = await hashPassword(data.password);
-    try { await db.prepare('INSERT INTO users (id,name,email,password_hash) VALUES (?,?,?,?)').bind(user.id,name,email,password).run(); }
+    try { await db.batch([
+      db.prepare('INSERT INTO users (id,name,email,password_hash) VALUES (?,?,?,?)').bind(user.id,name,email,password),
+      db.prepare('INSERT INTO customer_profiles(user_id,phone,address,payment_preference) VALUES (?,?,?,?)').bind(user.id,profile.phone,profile.address,profile.payment_preference),
+    ]); }
     catch (error) { if (String(error).includes('UNIQUE')) fail(409, 'Já existe uma conta com esse e-mail. Entre na sua conta.'); throw error; }
     return createSession(request, db, user);
   }
@@ -104,6 +114,25 @@ async function api(request, env) {
     return json({ ok: true }, 200, { 'Set-Cookie': sessionCookie(request, '', 0) });
   }
   if (path === '/api/account' && method === 'GET') return json(await account(db, user));
+  if (path === '/api/profile' && method === 'POST') {
+    if (!await checkoutReady(db)) fail(503,'A atualização de dados ainda está sendo preparada. Fale com a Saints’.');
+    const data = await body(request);
+    let profile; try { profile = validateProfile(data); } catch (error) { fail(400,error.message); }
+    const name = text(data.name,80);
+    if (name.length < 2 || /[\x00-\x1f]/.test(name)) fail(400,'Informe seu nome completo.');
+    await db.batch([
+      db.prepare('UPDATE users SET name=? WHERE id=?').bind(name,user.id),
+      db.prepare(`INSERT INTO customer_profiles(user_id,phone,address,payment_preference) VALUES (?,?,?,?)
+        ON CONFLICT(user_id) DO UPDATE SET phone=excluded.phone,address=excluded.address,payment_preference=excluded.payment_preference,updated_at=unixepoch()`)
+        .bind(user.id,profile.phone,profile.address,profile.payment_preference),
+    ]);
+    return json({ok:true});
+  }
+  if (path === '/api/checkout' && method === 'POST') {
+    await rateLimit(request,db,'checkout');
+    const result = await acceptCheckout(db,env,user,await body(request));
+    return json({order:result.order},result.created ? 201 : 200);
+  }
   if (path === '/api/orders' && method === 'POST') {
     const data = await body(request), key = requestKey(data.request_key), amount = cents(data.amount_cents);
     const existing = await db.prepare('SELECT id FROM orders WHERE user_id = ? AND request_key = ?').bind(user.id,key).first();
@@ -136,7 +165,22 @@ async function api(request, env) {
     if (path === '/api/admin/overview' && method === 'GET') {
       const orders = await db.prepare('SELECT o.*, u.name, u.email FROM orders o JOIN users u ON u.id=o.user_id ORDER BY (o.status = \'pending\') DESC, o.created_at DESC LIMIT 100').all();
       const redemptions = await db.prepare('SELECT r.*, u.name, u.email, w.title FROM redemptions r JOIN users u ON u.id=r.user_id JOIN rewards w ON w.id=r.reward_id ORDER BY (r.status = \'pending\') DESC, r.created_at DESC LIMIT 100').all();
-      return json({ orders: orders.results, redemptions: redemptions.results });
+      return json({ orders: orders.results, redemptions: redemptions.results, checkouts:await listCheckouts(db), whatsapp_enabled:whatsappConfigured(env) });
+    }
+    const retryMatch = path.match(/^\/api\/admin\/checkouts\/([a-f0-9-]+)\/retry$/);
+    if (retryMatch && method === 'POST') {
+      await rateLimit(request,db,'whatsapp-retry');
+      const data = await body(request);
+      const row = await db.prepare('SELECT status,updated_at FROM whatsapp_outbox WHERE checkout_id=?').bind(retryMatch[1]).first();
+      if (!row) fail(404,'Pedido não encontrado.');
+      if (row.status === 'opted_out') fail(409,'O cliente não autorizou o contato pelo WhatsApp.');
+      if (row.status === 'sending' && row.updated_at > Date.now()/1000-300) fail(409,'O envio ainda está em andamento. Atualize o painel em alguns minutos.');
+      if (['uncertain','sending'].includes(row.status)) {
+        if (data.acknowledge_duplicate_risk !== true) fail(409,'Confira a conversa antes de reenviar: o cliente pode já ter recebido a mensagem.');
+        await db.prepare("UPDATE whatsapp_outbox SET status='failed' WHERE checkout_id=? AND status=?").bind(retryMatch[1],row.status).run();
+      }
+      await dispatchReceipt(db,env,retryMatch[1]);
+      return json({ok:true});
     }
     const orderMatch = path.match(/^\/api\/admin\/orders\/([a-f0-9-]+)\/(confirm|reject)$/);
     if (orderMatch && method === 'POST') {
@@ -148,13 +192,20 @@ async function api(request, env) {
         fail(409, 'Esta compra já foi revisada. Atualize o painel.');
       }
       if (action === 'reject') {
-        await db.prepare('UPDATE orders SET status=\'rejected\', reviewed_by=?, reviewed_at=unixepoch() WHERE id=? AND status=\'pending\'').bind(user.id,id).run();
+        await db.batch([
+          db.prepare("UPDATE orders SET status='rejected', reviewed_by=?, reviewed_at=unixepoch() WHERE id=? AND status='pending'").bind(user.id,id),
+          ...(await checkoutReady(db) ? [db.prepare("UPDATE checkout_orders SET payment_status='not_approved' WHERE loyalty_order_id=? AND EXISTS(SELECT 1 FROM orders WHERE id=? AND status='rejected')").bind(id,id)] : []),
+        ]);
         const current = await db.prepare('SELECT status FROM orders WHERE id=?').bind(id).first();
         if (current.status !== 'rejected') fail(409, 'Esta compra já foi confirmada. Atualize o painel.');
         return json({ status: 'rejected' });
       }
       const data = await body(request), amount = cents(data.amount_cents), reference = text(data.sale_reference,100).toLowerCase();
       if (reference.length < 3) fail(400, 'Informe uma referência única da compra, com pelo menos 3 caracteres.');
+      if (await checkoutReady(db)) {
+        const web = await db.prepare('SELECT id,amount_cents FROM checkout_orders WHERE loyalty_order_id=?').bind(id).first();
+        if (web && (web.amount_cents !== amount || reference !== `web-${web.id}`)) fail(400,'Para pedidos do site, preserve o valor e a referência exibidos no painel.');
+      }
       const points = Math.floor(amount / 100);
       try {
         await db.batch([
@@ -162,6 +213,7 @@ async function api(request, env) {
           db.prepare(`INSERT INTO point_entries (id,user_id,delta,description,order_id)
             SELECT ?,user_id,points,'Compra confirmada pela equipe',id FROM orders WHERE id=? AND status='confirmed'
             ON CONFLICT(order_id) DO NOTHING`).bind(crypto.randomUUID(),id),
+          ...(await checkoutReady(db) ? [db.prepare("UPDATE checkout_orders SET payment_status='confirmed' WHERE loyalty_order_id=? AND EXISTS(SELECT 1 FROM orders WHERE id=? AND status='confirmed')").bind(id,id)] : []),
         ]);
       } catch (error) { if (String(error).includes('UNIQUE')) fail(409, 'Essa referência já foi usada em outra compra.'); throw error; }
       const current = await db.prepare('SELECT status, points FROM orders WHERE id = ?').bind(id).first();
@@ -186,7 +238,7 @@ export default {
     if (!new URL(request.url).pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
     try { return await api(request,env); }
     catch (error) {
-      if (error instanceof HttpError) return json({ error: error.message },error.status);
+      if (error instanceof HttpError || error instanceof CheckoutError) return json({ error: error.message },error.status);
       // Do not log request bodies, credentials, or SQL values.
       console.error('Credit system request failed:', error.name || 'Error');
       return json({ error: 'Não foi possível concluir agora. Tente novamente.' },500);
