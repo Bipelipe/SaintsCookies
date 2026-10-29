@@ -1,6 +1,15 @@
 -- Execute no Console do D1 saintscookies-creditos já inicializado.
 -- Atualização aditiva e repetível; preserva contas, compras e pontos.
+-- Cria também o controle de migrações, caso a instalação anterior não o tenha criado.
 
+
+-- Keep Wrangler migrations compatible with this initial console import.
+CREATE TABLE IF NOT EXISTS d1_migrations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT UNIQUE,
+  applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+INSERT OR IGNORE INTO d1_migrations (name) VALUES ('0001_loyalty.sql');
 -- Additive migration: existing accounts, purchases and points are preserved.
 CREATE TABLE IF NOT EXISTS customer_profiles (
   user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,

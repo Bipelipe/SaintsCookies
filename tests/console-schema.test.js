@@ -23,16 +23,24 @@ test('the console initializer can be repeated without resetting customers, point
   } finally { db.close(); }
 });
 
-test('incremental checkout migration preserves the original database and is repeatable',()=>{
+for (const hasHistory of [false,true]) test(`incremental checkout migration preserves data and is repeatable ${hasHistory ? 'with' : 'without'} an existing migration tracker`,()=>{
   const db=new DatabaseSync(':memory:');
   try {
     db.exec(readFileSync('migrations/0001_loyalty.sql','utf8'));
-    db.exec("CREATE TABLE d1_migrations(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT UNIQUE,applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL)");
+    if (hasHistory) {
+      db.exec("CREATE TABLE d1_migrations(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT UNIQUE,applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL)");
+      db.exec("INSERT INTO d1_migrations(name) VALUES('0001_loyalty.sql')");
+    }
     db.exec("INSERT INTO users(id,name,email,password_hash) VALUES('old','Conta existente','old@example.test','existing-hash')");
     const sql=readFileSync('docs/CREDITOS-D1-ATUALIZACAO-0002.sql','utf8');
-    db.exec(sql);db.exec(sql);
+    db.exec(sql);
+    db.exec("INSERT INTO customer_profiles(user_id,phone,address,payment_preference) VALUES('old','5511999999999','Rua dos Testes, 123, São Paulo, SP','pix')");
+    db.exec(sql);
     assert.equal(db.prepare("SELECT password_hash FROM users WHERE id='old'").get().password_hash,'existing-hash');
-    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM customer_profiles').get().n,0);
+    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM customer_profiles').get().n,1);
     assert.equal(db.prepare('SELECT COUNT(*) AS n FROM rewards').get().n,3);
+    for (const name of ['0001_loyalty.sql','0002_checkout_whatsapp.sql']) {
+      assert.equal(db.prepare('SELECT COUNT(*) AS n FROM d1_migrations WHERE name=?').get(name).n,1);
+    }
   } finally {db.close();}
 });

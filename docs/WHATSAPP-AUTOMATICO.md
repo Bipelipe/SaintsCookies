@@ -61,6 +61,8 @@ O modelo é uma confirmação da encomenda, sem alegação de pagamento recebido
 
 ## O que testar após configurar
 
+Se o Console apresentar `no such table: d1_migrations`, copie novamente o arquivo **CREDITOS-D1-ATUALIZACAO-0002.sql** atualizado e execute o conteúdo inteiro no banco existente. A versão corrigida cria a tabela de controle se ela estiver ausente. Pode executar novamente mesmo que parte das tabelas já exista; os dados existentes são preservados. Não é necessário refazer o deploy após executar o SQL: atualize o site e consulte `/api/checkout/config`.
+
 1. Executar o SQL 0002 e consultar `/api/checkout/config`: `ready` deve ser `true`. O sistema antigo continua permitindo login antes da migração; novos cadastros e o fechamento aguardam essa atualização.
 2. Cadastrar uma conta de teste com telefone **seu**, habilitado como destinatário caso use o número de teste da Meta. Escolher cookies, acessar “Fechar pedido”, conferir os dados e autorizar a confirmação por WhatsApp.
 3. Confirmar a encomenda. Deve aparecer “Encomenda aceita”, valor calculado pelo servidor e pagamento pendente. O WhatsApp deve receber o modelo aprovado. Enquanto faltarem configurações, o pedido fica aceito e o status informa que o WhatsApp ainda não foi ativado.
