@@ -3,6 +3,18 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 
+for (const incremental of [false,true]) test(`console ${incremental ? 'upgrade' : 'initializer'} still executes when pasted as one line`,()=>{
+  const db=new DatabaseSync(':memory:');
+  try {
+    if (incremental) db.exec(readFileSync('migrations/0001_loyalty.sql','utf8'));
+    const filename=incremental ? 'CREDITOS-D1-ATUALIZACAO-0002.sql' : 'CREDITOS-D1-INICIAL.sql';
+    const pasted=readFileSync(`docs/${filename}`,'utf8').replace(/[\r\n]+/g,' ');
+    db.exec(pasted);db.exec(pasted);
+    assert.equal(db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name IN ('customer_profiles','checkout_orders','checkout_items','whatsapp_outbox')").get().n,4);
+    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM d1_migrations').get().n,2);
+  } finally {db.close();}
+});
+
 test('the console initializer can be repeated without resetting customers, points or stock', () => {
   const db = new DatabaseSync(':memory:');
   try {

@@ -1,6 +1,3 @@
--- Execute no Console do D1 saintscookies-creditos.
--- Repetir este SQL não apaga clientes, pontos, resgates ou estoque existente.
-
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS users (
@@ -77,20 +74,17 @@ CREATE TABLE IF NOT EXISTS rate_limits (
   PRIMARY KEY (key, window)
 );
 
--- Demonstration rewards; this database is separate from the real storefront.
 INSERT OR IGNORE INTO rewards (id, title, description, cost, stock) VALUES
   ('cookie-classico', 'Um clássico por nossa conta', '1 cookie clássico. Resgate ilustrativo para testar a fidelidade.', 50, 20),
   ('caixinha', 'Uma caixinha de carinho', 'Caixinha com 4 cookies. Disponibilidade confirmada pela equipe.', 150, 10),
   ('kit-especial', 'Um momento especial', 'Kit de cookies para compartilhar. Brinde de demonstração.', 300, 5);
 
--- Keep Wrangler migrations compatible with this initial console import.
 CREATE TABLE IF NOT EXISTS d1_migrations (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT UNIQUE,
   applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 INSERT OR IGNORE INTO d1_migrations (name) VALUES ('0001_loyalty.sql');
--- Additive migration: existing accounts, purchases and points are preserved.
 CREATE TABLE IF NOT EXISTS customer_profiles (
   user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   phone TEXT NOT NULL,
