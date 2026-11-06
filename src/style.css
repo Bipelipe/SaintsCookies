@@ -96,3 +96,6 @@ footer > small { font-size: 12px; }
   .product-title { flex-direction: row; align-items: center; }
   .product-detail { font-size: 11px; }
 }
+
+/* Current catalog: cookies by unit and shortbread biscuits by 100 g pot. */
+.product-title .price-unit{display:block;font-size:11px;line-height:1.6;color:var(--muted);font-weight:400}.product-image.biscuit img{position:static;width:100%;height:100%;left:auto;top:auto;object-fit:cover}.checkout-unit{display:block;font-size:13px;line-height:1.7;color:var(--muted);margin-top:3px}.bag-item>img{object-fit:cover}.product-detail{line-height:1.7}.catalog-note .illustrative-note{line-height:1.9}

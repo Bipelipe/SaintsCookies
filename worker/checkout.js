@@ -1,4 +1,4 @@
-import { products } from '../src/products.js';
+import { products,productLabel } from '../src/products.js';
 import { checkoutReady, profileFor, consentText } from './profile.js';
 import { dispatchReceipt } from './whatsapp.js';
 
@@ -6,15 +6,20 @@ export class CheckoutError extends Error {
   constructor(status,message) { super(message); this.status = status; }
 }
 const reject = (status,message) => { throw new CheckoutError(status,message); };
+function normalizeSelection(items) {
+  if(!Array.isArray(items)||!items.length||items.length>100) reject(400,'Escolha pelo menos um produto.');
+  const seen=new Set();
+  return items.map(item=>{
+    if(typeof item?.id!=='string'||!/^[a-z0-9-]{1,80}$/.test(item.id)||seen.has(item.id)||!Number.isInteger(item.quantity)||item.quantity<1||item.quantity>99) reject(400,'Confira os sabores e quantidades da sacola.');
+    seen.add(item.id);return {id:item.id,quantity:item.quantity};
+  }).sort((a,b)=>a.id.localeCompare(b.id));
+}
 export function priceCart(items) {
-  if (!Array.isArray(items) || !items.length || items.length > products.length) reject(400,'Escolha pelo menos um cookie.');
-  const seen = new Set();
-  const priced = items.map(item => {
-    const product = products.find(p => p.id === item?.id);
-    if (!product || seen.has(product.id) || !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 99) reject(400,'Confira os sabores e quantidades da sacola.');
-    seen.add(product.id);
-    return { product_id:product.id,product_name:product.name,quantity:item.quantity,unit_cents:Math.round(product.price*100) };
-  }).sort((a,b)=>a.product_id.localeCompare(b.product_id));
+  const priced = normalizeSelection(items).map(item => {
+    const product = products.find(p => p.id === item.id);
+    if (!product) reject(400,'Este produto não faz parte do cardápio atual. Atualize a sacola e escolha seus sabores.');
+    return { product_id:product.id,product_name:productLabel(product),quantity:item.quantity,unit_cents:Math.round(product.price*100) };
+  });
   const amount = priced.reduce((sum,item)=>sum+item.quantity*item.unit_cents,0);
   if (amount > 1000000) reject(400,'O pedido deve ter um valor de até R$ 10.000.');
   return { items:priced,amount_cents:amount };
@@ -38,14 +43,15 @@ export async function acceptCheckout(db,env,user,data) {
   if (!await checkoutReady(db)) reject(503,'O fechamento está sendo preparado. Fale com a Saints’ para concluir sua encomenda.');
   if (typeof data.request_key !== 'string' || !/^[a-zA-Z0-9-]{1,80}$/.test(data.request_key)) reject(400,'Reabra o fechamento e tente novamente.');
   if (typeof data.whatsapp_consent !== 'boolean') reject(400,'Confira sua preferência de contato pelo WhatsApp.');
-  const { items,amount_cents } = priceCart(data.items);
-  const cartKey = JSON.stringify({ items:items.map(i=>[i.product_id,i.quantity]),consent:data.whatsapp_consent });
+  const selected=normalizeSelection(data.items);
+  const cartKey = JSON.stringify({ items:selected.map(i=>[i.id,i.quantity]),consent:data.whatsapp_consent });
   const existing = await db.prepare('SELECT id,cart_key FROM checkout_orders WHERE user_id=? AND request_key=?').bind(user.id,data.request_key).first();
   if (existing) {
     if (existing.cart_key !== cartKey) reject(409,'Esta referência já foi usada. Atualize a página para preparar outro pedido.');
     // Replaying checkout retrieves the receipt; only staff can retry a failed send.
     return { order:await getCheckout(db,existing.id),created:false };
   }
+  const { items,amount_cents } = priceCart(selected);
   const profile = await profileFor(db,user.id);
   if (!profile) reject(400,'Complete seu telefone, endereço e pagamento preferido antes de fechar o pedido.');
   const id = crypto.randomUUID(), paymentRecordId = crypto.randomUUID();

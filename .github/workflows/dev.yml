@@ -20,6 +20,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:account
       - run: npm run test:account:pages
+      - run: npm run test:e2e
       - run: npm run build -- --base=/
       - uses: actions/upload-artifact@v4
         with:

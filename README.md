@@ -49,4 +49,6 @@ O workflow `.github/workflows/dev.yml` verifica cadastro, login, perfil, pedidos
 
 ## Antes de uso comercial
 
-Os sabores, preços e fotos do catálogo continuam de demonstração. Defina os dados oficiais, disponibilidade, local e horários de retirada e as condições de entrega/pagamento. Esta versão aceita encomendas de teste sem cobrança automática. A área de conta ainda não oferece recuperação de senha ou verificação de e-mail.
+O catálogo usa os sabores e preços informados pela loja: Brown butter, Red velvet e Chocolate, R$ 12 por cookie de aproximadamente 90 g; Amanteigado e Amanteigado de canela, R$ 12 por pote de 100 g; Parmesão, R$ 15 por pote de 100 g. As imagens permanecem ilustrativas até a inclusão das fotos oficiais.
+
+Defina disponibilidade, local e horários de retirada e as condições de entrega/pagamento antes do uso comercial. Esta versão aceita encomendas de teste sem cobrança automática. A área de conta ainda não oferece recuperação de senha ou verificação de e-mail.

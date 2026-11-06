@@ -12,7 +12,7 @@ async function client(playwright,label,admin=false) {
 }
 const assign=(admin,person,role,expected_role)=>admin.api.post(`/api/admin/users/${person.id}/role`,{data:{role,expected_role}});
 async function order(customer) {
-  const response=await customer.api.post('/api/checkout',{data:{items:[{id:'classic',quantity:2}],request_key:randomUUID(),whatsapp_consent:false}});
+  const response=await customer.api.post('/api/checkout',{data:{items:[{id:'brown-butter',quantity:2}],request_key:randomUUID(),whatsapp_consent:false}});
   expect(response.status()).toBe(201);return(await response.json()).order;
 }
 
@@ -65,7 +65,7 @@ test('exclusive admin UI lists accounts, edits roles, inspects purchase history 
   await expect(page.locator('#admin-feedback')).toContainText('Cargo atualizado');
   await expect(page.locator('#users-table .role-badge')).toHaveText('Dono');await expect(page.locator('#role-audit')).toContainText(customer.person.email);
   await page.locator('#user-order-history [data-open-order]').click();
-  await expect(page.locator('#order-detail')).toContainText('2× O clássico');
+  await expect(page.locator('#order-detail')).toContainText('2× Brown butter');
   page.once('dialog',dialog=>dialog.accept());await page.getByRole('button',{name:'Confirmar pagamento deste pedido',exact:true}).click();
   await expect(page.locator('#order-detail')).toContainText('Pagamento confirmado');
   await page.reload();await expect(page.locator('#order-detail')).toContainText(purchase.number);

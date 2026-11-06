@@ -5,20 +5,20 @@ test('filters, adds, persists and removes cookies from the bag', async ({ page }
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
   await expect(page.locator('.product-card')).toHaveCount(6);
-  await page.getByRole('button', { name: 'Bem recheados', exact: true }).click();
+  await page.getByRole('button', { name: 'Cookies', exact: true }).click();
   await expect(page.locator('.product-card')).toHaveCount(3);
-  await page.getByRole('button', { name: 'Adicionar Chocolate & avelã à sacola', exact: true }).click();
+  await page.getByRole('button', { name: 'Adicionar Chocolate à sacola', exact: true }).click();
   await expect(page.locator('.bag-count')).toHaveText('1');
   await page.reload();
   await expect(page.locator('.bag-count')).toHaveText('1');
   await page.getByRole('button', { name: 'Abrir sacola' }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
-  await dialog.getByRole('button', { name: 'Adicionar uma unidade de Chocolate & avelã' }).click();
-  await expect(dialog.locator('.subtotal')).toContainText('32,00');
-  await expect(dialog.locator('.sample-notice')).toContainText('ilustrativo');
-  await dialog.getByRole('button', { name: 'Remover uma unidade de Chocolate & avelã' }).click();
-  await dialog.getByRole('button', { name: 'Remover uma unidade de Chocolate & avelã' }).click();
+  await dialog.getByRole('button', { name: 'Adicionar uma unidade de Chocolate' }).click();
+  await expect(dialog.locator('.subtotal')).toContainText('24,00');
+  await expect(dialog.locator('.sample-notice')).toContainText('pote de 100 g');
+  await dialog.getByRole('button', { name: 'Remover uma unidade de Chocolate' }).click();
+  await dialog.getByRole('button', { name: 'Remover uma unidade de Chocolate' }).click();
   await expect(dialog.locator('.empty-bag')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
@@ -29,13 +29,33 @@ test('filters, adds, persists and removes cookies from the bag', async ({ page }
 test('selection can be copied for a real conversation', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.goto('/');
-  await page.getByRole('button', { name: 'Adicionar O clássico à sacola', exact: true }).click();
+  await page.getByRole('button', { name: 'Adicionar Brown butter à sacola', exact: true }).click();
   await page.getByRole('button', { name: 'Abrir sacola' }).click();
   await page.getByRole('button', { name: 'Copiar minha seleção' }).click();
   const text = await page.evaluate(() => navigator.clipboard.readText());
-  expect(text).toContain('1× O clássico');
-  expect(text).toContain('confirmar os sabores, valores');
+  expect(text).toContain('1× Brown butter');
+  expect(text).toContain('confirmar a disponibilidade');
   await expect(page.getByRole('link', { name: 'Enviar pelo Instagram' })).toHaveAttribute('href', 'https://www.instagram.com/saintscookies/');
+});
+
+test('real product categories show the right weights and biscuit quantities count pots',async({page,context})=>{
+  await context.grantPermissions(['clipboard-read','clipboard-write']);
+  await page.goto('/');
+  await page.getByRole('button',{name:'Cookies',exact:true}).click();
+  await expect(page.locator('.product-card h3')).toHaveText(['Brown butter','Red velvet','Chocolate']);
+  for(const detail of await page.locator('.product-detail').allTextContents()) expect(detail).toContain('90 G');
+  await expect(page.locator('#product-grid')).not.toContainText('100 G');
+  await page.getByRole('button',{name:'Biscoitos amanteigados',exact:true}).click();
+  await expect(page.locator('.product-card h3')).toHaveText(['Amanteigado','Amanteigado de canela','Parmesão']);
+  for(const detail of await page.locator('.product-detail').allTextContents()) expect(detail).toContain('POTE DE 100 G');
+  const parmesan=page.locator('.product-card').filter({has:page.getByRole('heading',{name:'Parmesão',exact:true})});
+  await expect(parmesan).toContainText('R$ 15,00');await expect(parmesan).toContainText('por pote');
+  await parmesan.getByRole('button',{name:'Adicionar Parmesão à sacola',exact:true}).click();
+  await page.getByRole('button',{name:'Abrir sacola'}).click();
+  await page.getByRole('button',{name:'Adicionar um pote de Parmesão',exact:true}).click();
+  await expect(page.locator('.bag-item')).toContainText('Pote de 100 g');await expect(page.locator('.subtotal')).toContainText('R$ 30,00');
+  await page.getByRole('button',{name:'Copiar minha seleção',exact:true}).click();
+  expect(await page.evaluate(()=>navigator.clipboard.readText())).toContain('2× Parmesão (pote de 100 g)');
 });
 
 test('desktop and mobile layouts load images and have no horizontal overflow', async ({ page }) => {
@@ -69,19 +89,19 @@ test('categories stay accessible within the catalog and leave before the brand s
     const headerBottom = (await header.boundingBox()).height;
     await expect.poll(async () => (await toolbar.boundingBox()).y).toBe(headerBottom);
 
-    await page.getByRole('button', { name: 'Especiais', exact: true }).click();
-    await expect(page.locator('.product-card')).toHaveCount(1);
-    await expect(page.locator('.product-card h3')).toHaveText('Pistache dos céus');
+    await page.getByRole('button', { name: 'Biscoitos amanteigados', exact: true }).click();
+    await expect(page.locator('.product-card')).toHaveCount(3);
+    await expect(page.locator('.product-card h3')).toHaveText(['Amanteigado','Amanteigado de canela','Parmesão']);
     await expect.poll(async () => (await toolbar.boundingBox()).y).toBe(headerBottom);
     const toolbarBox = await toolbar.boundingBox();
-    const productBox = await page.locator('.product-card').boundingBox();
+    const productBox = await page.locator('.product-card').first().boundingBox();
     expect(productBox.y).toBeGreaterThanOrEqual(toolbarBox.y + toolbarBox.height);
     expect(productBox.y).toBeLessThan(350);
 
-    await page.getByRole('button', { name: 'Bem recheados', exact: true }).click();
+    await page.getByRole('button', { name: 'Cookies', exact: true }).click();
     await expect(page.locator('.product-card')).toHaveCount(3);
-    await expect(page.getByRole('button', { name: 'Bem recheados', exact: true })).toHaveAttribute('aria-pressed', 'true');
-    await page.getByRole('button', { name: 'Adicionar Chocolate & avelã à sacola', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Cookies', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await page.getByRole('button', { name: 'Adicionar Chocolate à sacola', exact: true }).click();
     await page.getByRole('button', { name: 'Abrir sacola' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await page.getByRole('button', { name: 'Fechar sacola' }).click();

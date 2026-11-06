@@ -15,7 +15,7 @@ const account=async api=>(await api.get('/api/account')).json();
 test('cart to account checkout: accepted receipt survives a lost response and keeps payment pending',async({page})=>{
   const customer=person();
   await page.goto('/');
-  await page.getByRole('button',{name:'Adicionar O clássico à sacola',exact:true}).click();
+  await page.getByRole('button',{name:'Adicionar Brown butter à sacola',exact:true}).click();
   await page.locator('#open-bag').click();
   await page.getByRole('link',{name:'Fechar pedido',exact:true}).click();
   await page.getByRole('button',{name:'Criar minha conta',exact:true}).click();
@@ -59,7 +59,7 @@ test('checkout validates profiles, server totals, permissions and concurrent ret
   for(const invalid of [{phone:''},{address:''},{payment_preference:'unknown'}]) {
     expect((await customer.api.post('/api/profile',{data:{...customer.data,...invalid}})).status()).toBe(400);
   }
-  const data={items:[{id:'classic',quantity:2,price:0}],amount_cents:1,request_key:randomUUID(),whatsapp_consent:false};
+  const data={items:[{id:'brown-butter',quantity:2,price:0}],amount_cents:1,request_key:randomUUID(),whatsapp_consent:false};
   const responses=await Promise.all([customer.api.post('/api/checkout',{data}),customer.api.post('/api/checkout',{data})]);
   expect(responses.map(r=>r.status()).sort()).toEqual([200,201]);
   const order=(await responses[0].json()).order;
@@ -70,7 +70,7 @@ test('checkout validates profiles, server totals, permissions and concurrent ret
   expect((await admin.api.post(`/api/admin/checkouts/${order.id}/retry`,{data:{}})).status()).toBe(409);
   expect((await customer.api.post('/api/checkout',{headers:{Origin:'https://untrusted.example'},data:{...data,request_key:randomUUID()}})).status()).toBe(403);
   expect((await customer.api.post('/api/checkout',{data:{...data,items:[{id:'unknown',quantity:1}],request_key:randomUUID()}})).status()).toBe(400);
-  expect((await customer.api.post('/api/checkout',{data:{...data,items:[{id:'classic',quantity:3}]}})).status()).toBe(409);
+  expect((await customer.api.post('/api/checkout',{data:{...data,items:[{id:'brown-butter',quantity:3}]}})).status()).toBe(409);
   const confirm=`/api/admin/checkouts/${order.id}/confirm-payment`;
   expect((await customer.api.post(confirm,{data:{}})).status()).toBe(403);
   const paid=await Promise.all([admin.api.post(confirm,{data:{amount_cents:9999}}),admin.api.post(confirm,{data:{}})]);
@@ -90,7 +90,7 @@ test('an existing account keeps login and must complete its profile before check
   execFileSync(process.execPath,['scripts/wrangler.mjs','d1','execute','DB','--local','--config','wrangler.dev.json','--persist-to','.wrangler/test-state','--command',`DELETE FROM customer_profiles WHERE user_id='${current.user.id}'`]);
   expect((await customer.api.post('/api/auth/login',{data:customer.data})).status()).toBe(200);
   expect((await account(customer.api)).profile).toBeNull();
-  const order={items:[{id:'classic',quantity:1}],request_key:randomUUID(),whatsapp_consent:false};
+  const order={items:[{id:'brown-butter',quantity:1}],request_key:randomUUID(),whatsapp_consent:false};
   expect((await customer.api.post('/api/checkout',{data:order})).status()).toBe(400);
   expect((await customer.api.post('/api/profile',{data:customer.data})).status()).toBe(200);
   expect((await customer.api.post('/api/checkout',{data:order})).status()).toBe(201);

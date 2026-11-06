@@ -1,4 +1,4 @@
-import { products, money } from './products.js';
+import { products, money, productUnit } from './products.js';
 import { api } from './api.js';
 
 const $ = selector => document.querySelector(selector);
@@ -78,20 +78,20 @@ function renderCheckout() {
     return;
   }
   if (!items.length) {
-    $('#checkout-content').innerHTML = '<p>Escolha seus cookies favoritos na loja para preparar uma encomenda.</p><a class="button button-outline" href="./index.html#sabores">Escolher cookies</a>';
+    $('#checkout-content').innerHTML = '<p>Escolha seus produtos favoritos na loja para preparar uma encomenda.</p><a class="button button-outline" href="./index.html#sabores">Escolher sabores</a>';
     return;
   }
   const total = items.reduce((sum,i)=>sum+products.find(p=>p.id===i.id).price*i.quantity,0);
   const pending = savedIntent();
   const consentChecked = pending?.itemsKey === JSON.stringify(items) && pending.consent === true;
-  $('#checkout-content').innerHTML = `<ul class="checkout-items">${items.map(i=>{const p=products.find(p=>p.id===i.id);return `<li><span>${i.quantity}× ${p.name}</span><strong>${money(p.price*i.quantity)}</strong></li>`;}).join('')}</ul>
-    <p class="checkout-total">Total dos cookies <strong>${money(total)}</strong></p>
+  $('#checkout-content').innerHTML = `<ul class="checkout-items">${items.map(i=>{const p=products.find(p=>p.id===i.id);return `<li><span>${i.quantity}× ${p.name}<small class="checkout-unit">${productUnit(p)}</small></span><strong>${money(p.price*i.quantity)}</strong></li>`;}).join('')}</ul>
+    <p class="checkout-total">Total dos produtos <strong>${money(total)}</strong></p>
     <p>Retirada com a Saints’, com horário a combinar. Pagamento preferido: <strong>${current.profile ? payments[current.profile.payment_preference] : 'complete seus dados acima'}</strong>.</p>
     <p>Ao confirmar, sua encomenda será aceita imediatamente. Este ambiente é de testes; não há cobrança automática.</p>
     <form id="checkout-form"><label class="check-label"><input name="whatsapp_consent" type="checkbox" ${consentChecked ? 'checked' : ''}><span>Autorizo a Saints’ Cookies a enviar a confirmação e atualizações deste pedido ao meu WhatsApp.</span></label>
     <p class="field-help">Se o envio estiver indisponível, seu pedido continuará salvo e o comprovante ficará disponível aqui. Você também pode encomendar sem receber mensagens.</p>
     <button type="submit" class="button button-primary" ${current.profile ? '' : 'disabled'}>Confirmar e aceitar encomenda</button></form>
-    <p class="field-help">Confira a sacola antes de confirmar. <a href="./index.html#sabores">Alterar meus cookies</a></p>`;
+    <p class="field-help">Confira a sacola antes de confirmar. <a href="./index.html#sabores">Alterar minha seleção</a></p>`;
 }
 export function renderAdminCheckouts(data) {
   $('#whatsapp-config-status').textContent = data.whatsapp_enabled ? 'Integração do WhatsApp ativada. Consulte abaixo o resultado de cada envio.' : 'O envio automático ainda depende das credenciais e do modelo aprovado no WhatsApp Business. Os pedidos continuam sendo aceitos e salvos.';
@@ -112,7 +112,7 @@ export function setupCommerce(actions) {
         await reload(); $('#profile-details').open = false; feedback('Seus dados foram salvos.');
       } else {
         const items = cart();
-        if (!items.length) throw new Error('Sua sacola está vazia. Escolha seus cookies na loja.');
+        if (!items.length) throw new Error('Sua sacola está vazia. Escolha seus sabores na loja.');
         const consent = form.elements.whatsapp_consent.checked;
         const pending = intent(items,consent);
         button.textContent = 'Registrando sua encomenda…';

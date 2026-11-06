@@ -51,7 +51,7 @@ test('signup, profile editing, order checkout and logout remain available withou
 
 test('authorization, passwords, origin checks and customer privacy remain protected',async({playwright})=>{
   const a=await client(playwright,'private-a'),b=await client(playwright,'private-b');
-  const checkout={items:[{id:'classic',quantity:1}],request_key:randomUUID(),whatsapp_consent:false};
+  const checkout={items:[{id:'brown-butter',quantity:1}],request_key:randomUUID(),whatsapp_consent:false};
   const order=(await (await a.api.post('/api/checkout',{data:checkout})).json()).order;
   expect((await b.api.get('/api/admin/overview')).status()).toBe(403);
   expect((await b.api.post(`/api/admin/checkouts/${order.id}/confirm-payment`,{data:{}})).status()).toBe(403);
@@ -83,7 +83,7 @@ test('removed loyalty endpoints cannot change historical balances, rewards or re
   for(const [path,method] of [['/api/rewards','get'],['/api/redemptions','post'],['/api/orders','post'],[`/api/admin/orders/${old}/confirm`,'post'],[`/api/admin/redemptions/${old}/fulfill`,'post']]) {
     expect((await admin.api[method](path,method==='post'?{data:{request_key:randomUUID(),reward_id:'cookie-classico',amount_cents:5000,sale_reference:randomUUID()}}:undefined)).status()).toBe(404);
   }
-  const result=await customer.api.post('/api/checkout',{data:{items:[{id:'classic',quantity:2}],request_key:randomUUID(),whatsapp_consent:false}});
+  const result=await customer.api.post('/api/checkout',{data:{items:[{id:'brown-butter',quantity:2}],request_key:randomUUID(),whatsapp_consent:false}});
   expect(result.status()).toBe(201);const order=(await result.json()).order;
   const confirm=()=>admin.api.post(`/api/admin/checkouts/${order.id}/confirm-payment`,{data:{}});
   for(const response of await Promise.all([confirm(),confirm()])) expect(response.status()).toBe(200);
@@ -98,7 +98,7 @@ test('removed loyalty endpoints cannot change historical balances, rewards or re
 
 test('admin can confirm a checkout payment through the interface without granting credits',async({page,playwright})=>{
   const customer=await client(playwright,'admin-ui-customer'),admin=await client(playwright,'admin-ui',true);
-  const order=(await (await customer.api.post('/api/checkout',{data:{items:[{id:'hazelnut',quantity:1}],request_key:randomUUID(),whatsapp_consent:false}})).json()).order;
+  const order=(await (await customer.api.post('/api/checkout',{data:{items:[{id:'red-velvet',quantity:1}],request_key:randomUUID(),whatsapp_consent:false}})).json()).order;
   await page.goto('/conta.html');
   await page.getByLabel('E-mail',{exact:true}).fill(admin.person.email);
   await page.getByLabel('Senha',{exact:true}).fill(admin.person.password);

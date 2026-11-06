@@ -9,7 +9,7 @@ async function fixture(consent=true) {
   const db=testDatabase();
   await db.prepare("INSERT INTO users(id,name,email,password_hash) VALUES('customer','Cliente de teste','wa@example.test','not-a-password')").run();
   await db.prepare("INSERT INTO customer_profiles(user_id,phone,address,payment_preference) VALUES('customer','5511999999999','Rua de Teste, 123, São Paulo, SP','pix')").run();
-  const {order}=await acceptCheckout(db,{}, {id:'customer',name:'Cliente de teste'}, {items:[{id:'classic',quantity:2}],request_key:crypto.randomUUID(),whatsapp_consent:consent});
+  const {order}=await acceptCheckout(db,{}, {id:'customer',name:'Cliente de teste'}, {items:[{id:'brown-butter',quantity:2}],request_key:crypto.randomUUID(),whatsapp_consent:consent});
   return {db,order};
 }
 const row=(db,id)=>db.prepare('SELECT * FROM whatsapp_outbox WHERE checkout_id=?').bind(id).first();

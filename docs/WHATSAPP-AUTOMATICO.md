@@ -25,7 +25,7 @@ Nesta implementação de teste, o atendimento é por **retirada**, com horário 
 | Webhook | Configurar a URL abaixo no app Meta, validar com o Verify Token e assinar o campo **messages**. Confirmar que o app está inscrito na conta WhatsApp Business correspondente (se não estiver, fazer a inscrição no painel/API oficial). | `https://dev.saintscookies.pages.dev/api/whatsapp/webhook`. A URL precisa estar acessível à Meta, sem tela de login do Cloudflare Access. |
 | `WHATSAPP_ENABLED` | Manter `false` enquanto prepara a integração. Após configurar tudo e aprovar o modelo, trocar para `true`. | Variável de texto no Pages Preview. As demais credenciais também precisam existir para o envio ser ativado. |
 | Cobrança da Meta e destinatários de teste | Consultar [preços oficiais](https://developers.facebook.com/docs/whatsapp/pricing/) e cadastrar pagamento quando exigido. Com o número de teste da Meta, adicionar/verificar os destinatários permitidos no painel. | Configuração na Meta, sem dados de cartão neste site. A integração pode gerar custos da Meta. |
-| Dados comerciais | Confirmar preços/sabores oficiais, disponibilidade, local e horários da retirada. Definir política de atendimento/cancelamento e aviso de privacidade com os dados reais da empresa. | Pode enviar esses dados comerciais aqui. O catálogo atual continua de demonstração. Entrega e cobrança automática exigem uma etapa adicional. |
+| Dados comerciais | Confirmar preços/sabores oficiais, disponibilidade, local e horários da retirada. Definir política de atendimento/cancelamento e aviso de privacidade com os dados reais da empresa. | Pode enviar esses dados comerciais aqui. Os sabores, preços e unidades do catálogo foram informados pela loja; as imagens são ilustrativas. Entrega e cobrança automática exigem uma etapa adicional. |
 
 Na Cloudflare, essas variáveis e secrets pertencem a **Workers & Pages → saintscookies (Pages) → Settings → Variables and Secrets → Preview**, e não ao Worker separado `saintscookies-creditos`. Os nomes exatos dos menus podem variar. Salve e refaça o deployment de `dev` para aplicar alterações de variáveis/secrets. O vínculo `DB` já está no `wrangler.jsonc`, apenas em Preview; não vincule o banco de teste a Production.
 
@@ -38,7 +38,7 @@ Nome sugerido: `saints_pedido_aceito`. Idioma: `pt_BR`. Corpo, com oito parâmet
 ```text
 Olá, {{1}}! Sua encomenda {{2}} foi aceita pela Saints’ Cookies.
 Itens: {{3}}
-Total dos cookies: {{4}}
+Total dos produtos: {{4}}
 Pagamento preferido: {{5}}
 Atendimento: {{6}}
 Endereço cadastrado: {{7}}
@@ -52,8 +52,8 @@ Exemplos fictícios para o pedido de aprovação:
 | --- | --- | --- |
 | 1 | Nome do cliente | Ana de Teste |
 | 2 | Número do pedido | SC-1234567890ABCDEF1234567890ABCDEF |
-| 3 | Quantidades e sabores, em uma linha | 2x O clássico; 1x Chocolate & avelã |
-| 4 | Total em reais | R$ 40,00 |
+| 3 | Quantidades e sabores, em uma linha | 2x Brown butter (cookie de aprox. 90 g); 1x Amanteigado (pote de 100 g) |
+| 4 | Total em reais | R$ 36,00 |
 | 5 | Pagamento preferido | Pix |
 | 6 | Forma de atendimento | Retirada com a Saints’ |
 | 7 | Endereço cadastrado | Rua de Exemplo, 123, Centro, São Paulo, SP, 01000-000 |
