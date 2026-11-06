@@ -7,6 +7,8 @@ import './style.css';
 import './conta.css';
 import './admin.css';
 import { api } from './api.js';
+import { setupPhoneFields } from './phone.js';
+import { passwordPattern, passwordHelp } from './password-policy.js';
 import { renderCommerce, renderAdminCheckouts, setupCommerce } from './account-commerce.js';
 
 const $ = selector => document.querySelector(selector);
@@ -50,7 +52,17 @@ document.addEventListener('click', async event => {
     document.querySelectorAll('[data-auth]').forEach(b => { b.classList.toggle('active', b === auth); b.setAttribute('aria-pressed', String(b === auth)); });
     $('#registration-fields').hidden = mode !== 'register';
     $('#registration-fields').disabled = mode !== 'register';
-    $('#auth-form').elements.password.autocomplete = mode === 'register' ? 'new-password' : 'current-password';
+    const password = $('#auth-form').elements.password;
+    password.autocomplete = mode === 'register' ? 'new-password' : 'current-password';
+    if (mode === 'register') {
+      password.minLength = 6;
+      password.pattern = passwordPattern;
+      password.title = passwordHelp;
+    } else {
+      for (const attribute of ['minlength','pattern','title']) password.removeAttribute(attribute);
+    }
+    $('#password-rules').hidden = mode !== 'register';
+    $('#password-rules').textContent = passwordHelp;
     $('#auth-submit').innerHTML = `${mode === 'register' ? 'Criar minha conta' : 'Entrar na minha conta'} ${arrow}`;
     feedback('');
     return;
@@ -80,5 +92,6 @@ document.addEventListener('submit', async event => {
   } catch (error) { feedback(error.message, true); if (error.status === 401) showAuth(); }
   finally { button.disabled = false; }
 });
+setupPhoneFields();
 setupCommerce({ reload:load, feedback });
 load().catch(error => { showAuth(); feedback(error.message, true); });

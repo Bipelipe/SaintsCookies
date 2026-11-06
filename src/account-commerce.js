@@ -1,5 +1,6 @@
 import { products, money, productUnit } from './products.js';
 import { api } from './api.js';
+import { formatBrazilPhone } from './phone.js';
 
 const $ = selector => document.querySelector(selector);
 const escape = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -66,6 +67,7 @@ export function renderCommerce(account) {
   const form = $('#profile-form');
   form.elements.name.value = account.user.name;
   for (const key of ['phone','address','payment_preference']) form.elements[key].value = account.profile?.[key] || '';
+  form.elements.phone.value = formatBrazilPhone(account.profile?.phone);
   $('#profile-help').textContent = account.profile ? 'Confira seus dados antes de fechar uma encomenda. Alterações valem para os próximos pedidos.' : 'Complete seus dados para conseguir fechar sua encomenda. Seu login continua o mesmo.';
   if (!account.profile) $('#profile-details').open = true;
   $('#checkout-history').innerHTML = account.checkouts.length ? account.checkouts.map(order=>orderCard(order)).join('') : '<p class="empty-history">As encomendas aceitas no site aparecerão aqui.</p>';

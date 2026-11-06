@@ -1,4 +1,5 @@
 import { hashPassword, verifyPassword, randomToken, digest, sessionToken, sessionCookie } from './security.js';
+import { validNewPassword, passwordHelp } from '../src/password-policy.js';
 import { databaseHealth } from './health.js';
 import { effectiveUser,capabilities } from './roles.js';
 import { administration,AdminError } from './admin.js';
@@ -76,7 +77,7 @@ async function api(request, env) {
     const data = await body(request);
     const name = text(data.name, 80), email = text(data.email, 254).toLowerCase();
     if (name.length < 2 || /[\x00-\x1f]/.test(name) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail(400, 'Informe seu nome e um e-mail válido.');
-    if (typeof data.password !== 'string' || data.password.length < 12 || data.password.length > 128 || !data.password.trim()) fail(400, 'Use uma senha de 12 a 128 caracteres.');
+    if (!validNewPassword(data.password)) fail(400, passwordHelp);
     if (!await checkoutReady(db)) fail(503,'O cadastro está sendo preparado. Tente novamente mais tarde ou fale com a Saints’.');
     let profile; try { profile = validateProfile(data); } catch (error) { fail(400,error.message); }
     const user = { id: crypto.randomUUID(), name, email, role: 'customer' };

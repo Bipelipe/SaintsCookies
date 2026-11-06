@@ -52,3 +52,5 @@ O workflow `.github/workflows/dev.yml` verifica cadastro, login, perfil, pedidos
 O catálogo usa os sabores e preços informados pela loja: Brown butter, Red velvet e Chocolate, R$ 12 por cookie de aproximadamente 90 g; Amanteigado e Amanteigado de canela, R$ 12 por pote de 100 g; Parmesão, R$ 15 por pote de 100 g. As imagens permanecem ilustrativas até a inclusão das fotos oficiais.
 
 Defina disponibilidade, local e horários de retirada e as condições de entrega/pagamento antes do uso comercial. Esta versão aceita encomendas de teste sem cobrança automática. A área de conta ainda não oferece recuperação de senha ou verificação de e-mail.
+
+O telefone no cadastro e no perfil mostra o código do Brasil `+55` fixo e formata o DDD e o número automaticamente, como `+55 (11) 99999-9999`. Novos cadastros exigem senha de 6 a 128 caracteres, com pelo menos uma letra maiúscula, uma minúscula e um número. A regra de criação não altera o acesso das contas existentes.

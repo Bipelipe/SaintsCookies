@@ -49,6 +49,49 @@ test('signup, profile editing, order checkout and logout remain available withou
   await expect(page.locator('#customer-name')).toHaveText('Nome atualizado');
 });
 
+test('Brazil phone fields format typing, paste, edits and saved profiles; signup shows the new password rules',async({page})=>{
+  const person={...identity('phone-mask'),password:'Abc123'};
+  await page.setViewportSize({width:390,height:900});
+  await page.goto('/conta.html');
+  await page.getByRole('button',{name:'Criar minha conta',exact:true}).click();
+  const phone=page.getByLabel('Telefone do WhatsApp',{exact:true});
+  await expect(page.locator('#registration-fields .phone-country')).toHaveText('+55');
+  await expect(phone).toHaveAttribute('placeholder','(11) 99999-9999');
+  await phone.pressSequentially('11987654321');
+  await expect(phone).toHaveValue('(11) 98765-4321');
+  await phone.press('Backspace');await phone.press('1');
+  await expect(phone).toHaveValue('(11) 98765-4321');
+  await phone.fill('+55 (21) 99876-5432');
+  await expect(phone).toHaveValue('(21) 99876-5432');
+  await phone.fill('11');
+  expect(await phone.evaluate(input=>input.checkValidity())).toBe(false);
+  const password=page.getByLabel('Senha',{exact:true});
+  await expect(page.locator('#password-rules')).toContainText('6 a 128 caracteres');
+  for(const invalid of ['Abc12','abcdef1','ABCDEF1','Abcdef']) {
+    await password.fill(invalid);
+    expect(await password.evaluate(input=>input.checkValidity())).toBe(false);
+  }
+  await password.fill('Abc123');
+  expect(await password.evaluate(input=>input.checkValidity())).toBe(true);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.screenshot({path:'/tmp/saints-registration-phone.png',fullPage:true});
+  await register(page,person);
+  await page.locator('#profile-details summary').click();
+  const saved=page.getByLabel('Telefone cadastrado',{exact:true});
+  await expect(saved).toHaveValue('(11) 99999-9999');
+  await saved.fill('5521998765432');
+  await expect(saved).toHaveValue('(21) 99876-5432');
+  await page.getByRole('button',{name:'Salvar meus dados',exact:true}).click();
+  await expect(page.locator('#feedback')).toContainText('Seus dados foram salvos');
+  expect((await account(page.request)).profile.phone).toBe('5521998765432');
+  await page.reload();
+  await expect(saved).toHaveValue('(21) 99876-5432');
+  await page.getByRole('button',{name:'Sair da conta',exact:true}).click();
+  await page.getByRole('button',{name:'Entrar',exact:true}).click();
+  await expect(password).not.toHaveAttribute('pattern',/.+/);
+  await expect(page.locator('#password-rules')).toBeHidden();
+});
+
 test('authorization, passwords, origin checks and customer privacy remain protected',async({playwright})=>{
   const a=await client(playwright,'private-a'),b=await client(playwright,'private-b');
   const checkout={items:[{id:'brown-butter',quantity:1}],request_key:randomUUID(),whatsapp_consent:false};

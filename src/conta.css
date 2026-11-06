@@ -22,6 +22,13 @@
 .account-page label { display:flex; flex-direction:column; gap:8px; font-size:15px; margin:16px 0; }
 .account-page input,.account-page select,.account-page textarea { width:100%; background:#fffefa; border:1px solid #d8cebc; border-radius:4px; font:inherit; font-size:16px; padding:13px 14px; color:var(--ink); min-height:47px; }
 .account-page input:focus-visible,.account-page select:focus-visible,.account-page textarea:focus-visible { outline:2px solid #a8803c; outline-offset:2px; }
+.phone-field { display:flex; align-items:center; min-width:0; background:#fffefa; border:1px solid #d8cebc; border-radius:4px; }
+.phone-country { flex:none; padding:0 13px; color:#6c5b3f; font-size:16px; border-right:1px solid #d8cebc; }
+.account-page .phone-field input { min-width:0; border:0; background:transparent; }
+.phone-field:focus-within { outline:2px solid #a8803c; outline-offset:2px; }
+.account-page .phone-field input:focus-visible { outline:none; }
+.account-page .phone-help { margin-top:-6px; }
+#profile-phone-help { font-size:13px; color:#81715a; }
 .account-page .field-help { font-size:14px; color:#81715a; line-height:1.8; margin:14px 0; }
 .auth-card .button { margin-top:10px; width:100%; justify-content:center; }
 .account-page button:disabled { opacity:.55; cursor:not-allowed; transform:none; }
