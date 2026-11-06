@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 // Real SQLite constraints/transactions behind the small D1 interface used here.
 export function testDatabase() {
   const sqlite = new DatabaseSync(':memory:');
-  sqlite.exec(readFileSync('docs/CREDITOS-D1-INICIAL.sql','utf8'));
+  sqlite.exec(readFileSync('docs/D1-INICIAL.sql','utf8'));
   const db = {
     prepare(sql) {
       let values = [];

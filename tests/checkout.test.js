@@ -38,7 +38,7 @@ test('checkout is atomic, idempotent, isolated and keeps immutable customer/item
     assert.equal((await profileFor(db,user.id)).address,'Outro endereço completo');
   } finally {db.close();}
 });
-test('a failed transaction leaves no accepted order or orphan loyalty purchase',async()=>{
+test('a failed transaction leaves no accepted order or orphan payment record',async()=>{
   const db=testDatabase();
   try {
     const user=await customer(db);

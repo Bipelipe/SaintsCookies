@@ -1,73 +1,50 @@
 # Saints’ Cookies
 
-Frontend responsivo de catálogo de cookies artesanais, com identidade em creme, dourado e rosa suave inspirada no Instagram da marca.
+Site de cookies artesanais, com catálogo, sacola, cadastro, login e encomendas. A identidade visual usa creme, dourado e rosa suave, com as fontes DM Sans e Playfair Display.
 
-## Fidelidade em testes — branch creditos
+## Desenvolvimento — branch dev
 
-A branch `creditos` inclui cadastro completo, D1, encomendas aceitas imediatamente, comprovante automático por WhatsApp mediante configuração, confirmação manual de pagamento/pontos, brindes e painel administrativo. Consulte [a tabela de informações e tarefas para ativar o WhatsApp](docs/WHATSAPP-AUTOMATICO.md). A prévia `creditos.saintscookies.pages.dev` usa Pages Functions e o banco de testes `saintscookies-creditos`; a opção de Worker separado também está disponível. Consulte [o guia de instalação, publicação e testes](docs/CREDITOS.md). O frontend sozinho no GitHub Pages não executa essa API.
+`dev` é a antiga branch `creditos`, renomeada com o histórico preservado. As próximas alterações vão para `dev`; `preview` está em espera. O merge em `main` depende de um pedido explícito do usuário.
+
+O sistema de pontos, brindes e resgates foi retirado. A área **Minha conta** mantém cadastro, login, dados pessoais e histórico de encomendas. O painel da equipe permite conferir pedidos e confirmar pagamentos, sem gerar créditos.
+
+- Prévia do desenvolvimento: <https://dev.saintscookies.pages.dev/>.
+- Minha conta: <https://dev.saintscookies.pages.dev/conta>.
+- Site principal no Pages: <https://saintscookies.pages.dev/>.
+- Guia do ambiente, banco e contas: [DESENVOLVIMENTO.md](docs/DESENVOLVIMENTO.md).
+
+O Pages usa Functions e o D1 existente `saintscookies-creditos`. O nome do banco foi mantido para preservar as contas e os pedidos cadastrados. A mudança não exige SQL novo no banco já inicializado.
 
 ## Executar
 
-Requer Node.js 20.19+ ou 22.12+ (validado com Node 24).
+Requer Node.js 24 para os testes completos.
 
 ```sh
 npm ci
-npm run dev
+npm run site:prepare
+npm run site:dev
 ```
 
-## Verificar e gerar a versão de produção
+Abra `/conta` no endereço local indicado. `npm run dev` inicia apenas o frontend com Vite; cadastro e login precisam do servidor completo acima. A integração com a Meta está em espera, com o código preservado para uma retomada futura.
+
+## Verificar
 
 ```sh
 npm test
-npm run build
-npm run preview
-```
-
-Os arquivos de produção ficam em `dist/` e podem ser publicados em hospedagem de sites estáticos, sem backend ou credenciais.
-
-## Publicação no GitHub Pages
-
-O workflow `.github/workflows/deploy.yml` testa, compila e publica automaticamente a cada push em `main` ou `preview`. No GitHub, configure **Settings → Pages → Build and deployment → Source → GitHub Actions**.
-
-- Site principal, sempre compilado de `main`: `https://bipelipe.github.io/SaintsCookies/`.
-- Prévia, sempre compilada de `preview`: `https://bipelipe.github.io/SaintsCookies/preview/`.
-
-O GitHub Pages publica um único artefato por repositório. Por isso, o workflow reúne os dois builds, cada um em seu diretório, sem incorporar o código da prévia ao site principal.
-
-O ambiente de implantação `github-pages` precisa permitir as branches `main` e `preview`. Se houver restrições de branches, um administrador pode incluir `preview` em **Settings → Environments → github-pages → Deployment branches and tags**, preservando as regras existentes. Não são necessários novos tokens ou secrets.
-
-Enquanto este workflow existir apenas em `preview`, para uma execução manual em **Actions → Publish Saints Cookies → Run workflow**, escolha a branch `preview`. A configuração antiga em `main` só publica o site principal.
-
-## Fluxo de revisão
-
-Todas as próximas alterações devem ser feitas e enviadas à branch `preview`. O merge em `main` só deve ser feito com um comando explícito do usuário. A regra está registrada em `AGENTS.md`.
-
-Para testar o build da prévia localmente:
-
-```sh
-npm run build -- --base=/SaintsCookies/preview/
-npm run preview -- --base=/SaintsCookies/preview/
-```
-
-O build padrão usa o prefixo `/SaintsCookies/`, incluindo imagens carregadas pelo catálogo e pela sacola. O workflow fornece o prefixo específico de cada versão usando `--base`.
-
-## Testes no navegador
-
-```sh
-npx playwright install chromium
+npm run test:account
+npm run test:account:pages
 npm run test:e2e
+npm run build -- --base=/
 ```
 
-Para usar um Chromium já instalado: `CHROMIUM_PATH=/usr/bin/chromium npm run test:e2e`.
+Instale o navegador com `npx playwright install chromium`. Para usar Chromium do sistema, defina `CHROMIUM_PATH=/usr/bin/chromium`. Os testes usam um banco local descartável separado do banco de desenvolvimento.
 
-## Funcionalidades
+## Publicação
 
-- Catálogo com filtros por clássicos, recheados e especiais.
-- Sacola com quantidades, subtotal e persistência local.
-- Seleção copiável para envio manual ao Instagram oficial.
-- Layout adaptado para celular, navegação por teclado e suporte a movimento reduzido.
-- Fontes e imagens locais, sem serviços externos necessários para renderização.
+A Cloudflare publica a branch `dev` como prévia do projeto Pages `saintscookies`, com o comando `npm run build -- --base=/` e pasta `dist`. O vínculo D1 `DB` é configurado pelo `wrangler.jsonc` apenas em Preview. Confira se o projeto permite builds de preview da branch `dev`.
 
-## Personalizar antes de lançar
+O workflow `.github/workflows/dev.yml` verifica cadastro, login, perfil, pedidos, pagamentos e ausência das antigas funções de créditos. O workflow histórico de GitHub Pages continua separado, com `main` e `preview`; ele não recebe esta mudança em produção.
 
-Os sabores, preços e pesos em `src/products.js` são sugestões ilustrativas. As imagens foram geradas para esta proposta, e o logotipo é uma interpretação tipográfica. Substitua-os pelos dados, fotos e identidade oficiais. Em `main`, o fluxo de seleção é combinado pelo Instagram. Em `creditos`, o pedido é aceito no site, sem cobrança automática, com retirada e horário a combinar. Antes do uso comercial, configure catálogo, condições de atendimento e a integração descrita no guia do WhatsApp. Os links de Instagram e Linktree seguem a referência enviada.
+## Antes de uso comercial
+
+Os sabores, preços e fotos do catálogo continuam de demonstração. Defina os dados oficiais, disponibilidade, local e horários de retirada e as condições de entrega/pagamento. Esta versão aceita encomendas de teste sem cobrança automática. A área de conta ainda não oferece recuperação de senha ou verificação de e-mail.

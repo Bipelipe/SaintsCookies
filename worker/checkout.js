@@ -22,7 +22,7 @@ export function priceCart(items) {
 const selection = `SELECT c.*,w.status AS whatsapp_status,w.error_code AS whatsapp_error,w.attempts,
   (SELECT json_group_array(json_object('product_id',i.product_id,'product_name',i.product_name,'quantity',i.quantity,'unit_cents',i.unit_cents)) FROM checkout_items i WHERE i.checkout_id=c.id) AS items_json
   FROM checkout_orders c JOIN whatsapp_outbox w ON w.checkout_id=c.id`;
-const unpack = row => { const {items_json,...order} = row; return {...order,items:JSON.parse(items_json)}; };
+const unpack = row => { const {items_json,loyalty_order_id,...order} = row; return {...order,items:JSON.parse(items_json)}; };
 export async function listCheckouts(db,userId) {
   if (!await checkoutReady(db)) return [];
   const result = userId
@@ -48,18 +48,18 @@ export async function acceptCheckout(db,env,user,data) {
   }
   const profile = await profileFor(db,user.id);
   if (!profile) reject(400,'Complete seu telefone, endereço e pagamento preferido antes de fechar o pedido.');
-  const id = crypto.randomUUID(), loyaltyId = crypto.randomUUID();
+  const id = crypto.randomUUID(), paymentRecordId = crypto.randomUUID();
   const number = `SC-${id.replaceAll('-','').toUpperCase()}`;
-  const note = `Pedido ${number} aceito no site; pagamento e pontos aguardam conferência.`;
-  // D1 batch is atomic: order, immutable item/profile snapshots, pending loyalty
-  // purchase and durable outbox are committed together, including concurrent retries.
+  const note = `Pedido ${number} aceito no site; pagamento aguarda conferência.`;
+  // D1 batch is atomic: order, immutable item/profile snapshots, pending payment
+  // record and durable outbox are committed together, including concurrent retries.
   await db.batch([
     db.prepare(`INSERT INTO orders(id,user_id,request_key,amount_cents,customer_note)
       SELECT ?,?,?,?,? WHERE NOT EXISTS(SELECT 1 FROM checkout_orders WHERE user_id=? AND request_key=?)`)
-      .bind(loyaltyId,user.id,`checkout-${id}`,amount_cents,note,user.id,data.request_key),
+      .bind(paymentRecordId,user.id,`checkout-${id}`,amount_cents,note,user.id,data.request_key),
     db.prepare(`INSERT INTO checkout_orders(id,number,user_id,request_key,cart_key,loyalty_order_id,customer_name,phone,address,payment_preference,amount_cents,whatsapp_consent,consent_text)
       SELECT ?,?,?,?,?,?,?,?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM orders WHERE id=?) ON CONFLICT(user_id,request_key) DO NOTHING`)
-      .bind(id,number,user.id,data.request_key,cartKey,loyaltyId,user.name,profile.phone,profile.address,profile.payment_preference,amount_cents,data.whatsapp_consent ? 1 : 0,consentText,loyaltyId),
+      .bind(id,number,user.id,data.request_key,cartKey,paymentRecordId,user.name,profile.phone,profile.address,profile.payment_preference,amount_cents,data.whatsapp_consent ? 1 : 0,consentText,paymentRecordId),
     ...items.map(item => db.prepare(`INSERT INTO checkout_items(checkout_id,product_id,product_name,quantity,unit_cents)
       SELECT ?,?,?,?,? WHERE EXISTS(SELECT 1 FROM checkout_orders WHERE id=?)`)
       .bind(id,item.product_id,item.product_name,item.quantity,item.unit_cents,id)),

@@ -1,10 +1,12 @@
 # Working agreement
 
-- Current explicit exception: implement the loyalty system, full customer profiles, immediately accepted checkout orders and official WhatsApp receipt integration on `creditos`. Purchase payment/points verification remains manual; a checkout is accepted before payment. The user chose the existing Cloudflare Pages project `saintscookies`, using Pages Functions and its Preview-only `DB` binding to D1 `saintscookies-creditos`. Keep the standalone Worker option available, but the current deployment target is the Pages preview of `creditos`. Do not merge this work into `preview` or `main` without the user's instruction. Normal website review work remains on `preview`.
-
-- The user wants all future website changes on the `preview` branch. Check the current branch before editing. Use the existing checkout; do not create a Git worktree unless explicitly requested.
-- Commit and push requested changes to `origin/preview`, after appropriate validation, so the user can review them separately from production.
-- Do not merge into `main` or push to `main` until the user explicitly commands a merge. Do not reset or revert existing `main` commits as part of preparing a preview.
-- Production is built from `main` at `/SaintsCookies/`. The review site is built from `preview` at `/SaintsCookies/preview/`. Keep these builds separate; never put preview code at the production root.
-- When a merge is explicitly requested, fetch both branches, preserve any existing changes, run appropriate checks, merge `preview` into `main` without a force push, and keep `preview` available for the next review cycle.
-- Verify the GitHub Actions deployment before claiming a preview or production update is live. If access is blocked, state that the branch is pushed and publication is unverified.
+- Active development branch: `dev`, renamed from `creditos` at the user's request. All future site changes go to `dev`. The `preview` branch is on hold; keep both `preview` and `main` untouched unless the user explicitly requests a merge or work there.
+- Use the existing checkout. Check the branch before editing, preserve uncommitted user work, and do not create a worktree unless requested.
+- Commit and push authorized changes to `origin/dev` after appropriate checks. Never merge or push into `main` without an explicit user command. Never force-push or rewrite the history preserved by the branch rename.
+- The points, rewards and redemption system has been removed. Keep login, customer profiles, checkout, receipts, order history and manual payment confirmation. Do not reintroduce credits or write to the historical points/redemption tables.
+- Preserve existing database records and migrations. The existing D1 `saintscookies-creditos` (binding `DB`) deliberately retains its name and ID for compatibility with existing accounts and orders. Legacy tables/column names and the session cookie are retained internally; they do not expose a loyalty feature.
+- Current deployment target is Cloudflare Pages project `saintscookies`, preview branch `dev`, with Preview-only D1 configured in `wrangler.jsonc`. Production has no test database binding. The expected branch URL is `https://dev.saintscookies.pages.dev/`.
+- The Meta integration is on hold. Preserve the existing integration code without activating it, changing remote credentials, or sending real messages unless the user resumes that work.
+- Verify GitHub checks and deployment before claiming the development preview is live. If publication is blocked, state what was pushed and what remains unverified.
+- For an explicitly requested merge, first inspect the final diff and production database/configuration needs. Preserve all existing work, run appropriate checks and merge without force-pushing.
+- The historical GitHub Pages workflow builds `main` at `/SaintsCookies/` and `preview` at `/SaintsCookies/preview/`. It does not publish `dev`; preserve that separation.

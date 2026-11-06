@@ -11,12 +11,12 @@ export async function databaseHealth(env) {
   const db = env.DB;
   if (!bindings.includes('DB')) return {
     status: 503,
-    data: { status: 'binding_missing', error: 'O banco de créditos ainda não foi conectado ao vínculo D1 DB.', ...diagnostic },
+    data: { status: 'binding_missing', error: 'O banco do site ainda não foi conectado ao vínculo D1 DB.', ...diagnostic },
   };
   try {
     // Validate every runtime table without reading any customer records.
-    await db.prepare(`SELECT u.id, s.token_hash, o.status, r.stock, x.status, p.delta, l.attempts
-      FROM users u, sessions s, orders o, rewards r, redemptions x, point_entries p, rate_limits l LIMIT 0`).first();
+    await db.prepare(`SELECT u.id, s.token_hash, o.status, l.attempts, c.phone, w.payment_status, i.quantity, n.status
+      FROM users u, sessions s, orders o, rate_limits l, customer_profiles c, checkout_orders w, checkout_items i, whatsapp_outbox n LIMIT 0`).first();
     return { status: 200, data: { status: 'ok', environment: 'test', ...diagnostic } };
   } catch (error) {
     if (String(error).includes('no such table')) return {

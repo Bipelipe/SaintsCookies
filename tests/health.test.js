@@ -8,12 +8,12 @@ test('diagnoses a wrong D1 binding name without exposing environment values', as
     db: binding(async () => null),
     ASSETS: new Proxy({ fetch() {} }, { get: (target,key) => target[key] || (() => {}) }),
     INTERNAL_TOKEN: 'do-not-expose-this-value',
-    CF_PAGES_BRANCH: 'creditos', CF_PAGES_COMMIT_SHA: 'public-commit',
+    CF_PAGES_BRANCH: 'dev', CF_PAGES_COMMIT_SHA: 'public-commit',
   });
   assert.equal(result.status,503);
   assert.equal(result.data.status,'binding_missing');
   assert.deepEqual(result.data.database_bindings,['db']);
-  assert.equal(result.data.deployment.branch,'creditos');
+  assert.equal(result.data.deployment.branch,'dev');
   assert.ok(!JSON.stringify(result).includes('do-not-expose-this-value'));
   assert.ok(!JSON.stringify(result).includes('INTERNAL_TOKEN'));
 });

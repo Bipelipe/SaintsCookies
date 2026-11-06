@@ -6,4 +6,5 @@ playwright-report/
 .dev.vars*
 .env*
 !*.example
+wrangler.dev.remote.json
 wrangler.creditos.remote.json

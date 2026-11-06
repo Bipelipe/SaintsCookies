@@ -18,6 +18,6 @@ const checkoutHistory = "\nINSERT OR IGNORE INTO d1_migrations (name) VALUES ('0
 // The dashboard input can flatten pasted newlines. A leading -- comment would
 // then swallow the entire script, so keep instructions in the Markdown guide.
 const forConsole = sql => sql.split(/\r?\n/).filter(line => !line.trimStart().startsWith('--')).join('\n').trim() + '\n';
-writeFileSync('docs/CREDITOS-D1-ATUALIZACAO-0002.sql', forConsole(history + checkout + checkoutHistory));
-writeFileSync('docs/CREDITOS-D1-INICIAL.sql', forConsole(schema + history + checkout + checkoutHistory));
+writeFileSync('docs/D1-ATUALIZACAO-0002.sql', forConsole(history + checkout + checkoutHistory));
+writeFileSync('docs/D1-INICIAL.sql', forConsole(schema + history + checkout + checkoutHistory));
 console.log('SQL inicial para o Console D1 preparado.');

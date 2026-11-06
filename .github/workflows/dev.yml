@@ -1,13 +1,13 @@
-name: Test creditos
+name: Test dev
 on:
   push:
-    branches: [creditos]
+    branches: [dev]
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   test:
-    if: github.ref == 'refs/heads/creditos'
+    if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,10 +18,10 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:creditos
-      - run: npm run test:creditos:pages
+      - run: npm run test:account
+      - run: npm run test:account:pages
       - run: npm run build -- --base=/
       - uses: actions/upload-artifact@v4
         with:
-          name: creditos-frontend
+          name: dev-frontend
           path: dist

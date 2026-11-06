@@ -4,5 +4,8 @@
   Referrer-Policy: same-origin
   Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'
 
-/creditos.html
+/conta
+  Cache-Control: no-store
+
+/conta.html
   Cache-Control: no-store

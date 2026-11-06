@@ -31,9 +31,10 @@ function intent(items, consent) {
   return {key,...saved};
 }
 function receiptText(order) {
-  return `Saints’ Cookies — pedido ${order.number}\nEncomenda aceita. ${paymentStatus[order.payment_status]}.\n\n${order.items.map(i=>`${i.quantity}x ${i.product_name} — ${money(i.quantity*i.unit_cents/100)}`).join('\n')}\n\nTotal: ${money(order.amount_cents/100)}\nCliente: ${order.customer_name}\nTelefone: +${order.phone}\nEndereço cadastrado: ${order.address}\nPagamento preferido: ${payments[order.payment_preference]}\nRetirada com a Saints’; horário a combinar.\nPontos liberados após a conferência do pagamento pela equipe.`;
+  return `Saints’ Cookies — pedido ${order.number}\nEncomenda aceita. ${paymentStatus[order.payment_status]}.\n\n${order.items.map(i=>`${i.quantity}x ${i.product_name} — ${money(i.quantity*i.unit_cents/100)}`).join('\n')}\n\nTotal: ${money(order.amount_cents/100)}\nCliente: ${order.customer_name}\nTelefone: +${order.phone}\nEndereço cadastrado: ${order.address}\nPagamento preferido: ${payments[order.payment_preference]}\nRetirada com a Saints’; horário a combinar.`;
 }
 function orderCard(order, admin = false) {
+  const confirmPayment = admin && order.payment_status === 'pending';
   const retry = admin && ['pending','not_configured','failed','uncertain','sending'].includes(order.whatsapp_status);
   return `<article class="web-order ${admin ? 'admin-item' : ''}"><div class="web-order-heading"><strong>Pedido ${escape(order.number)}</strong><span class="status confirmed">Encomenda aceita</span></div>
     <p>${escape(order.customer_name)} · ${money(order.amount_cents/100)}</p>
@@ -43,6 +44,7 @@ function orderCard(order, admin = false) {
     ${admin ? `<p>Telefone: +${escape(order.phone)}<br>Endereço cadastrado: ${escape(order.address)}</p>` : ''}
     <p class="receipt-status">${delivery[order.whatsapp_status] || 'Envio em verificação'}</p>
     ${admin && order.whatsapp_error ? `<p class="field-help">Código de envio: ${escape(order.whatsapp_error)}</p>` : ''}
+    ${confirmPayment ? `<button type="button" class="button button-primary" data-confirm-payment="${order.id}">Confirmar pagamento</button>` : ''}
     ${retry ? `<button type="button" class="button button-outline" data-retry-receipt="${order.id}" data-delivery-status="${order.whatsapp_status}">Tentar envio do comprovante</button>` : ''}
     ${!admin ? `<button type="button" class="text-link" data-copy-receipt="${order.id}">Copiar comprovante</button>` : ''}
   </article>`;
@@ -64,7 +66,7 @@ export function renderCommerce(account) {
   const form = $('#profile-form');
   form.elements.name.value = account.user.name;
   for (const key of ['phone','address','payment_preference']) form.elements[key].value = account.profile?.[key] || '';
-  $('#profile-help').textContent = account.profile ? 'Confira seus dados antes de fechar uma encomenda. Alterações valem para os próximos pedidos.' : 'Complete seus dados para conseguir fechar sua encomenda. Seu login e seus pontos continuam os mesmos.';
+  $('#profile-help').textContent = account.profile ? 'Confira seus dados antes de fechar uma encomenda. Alterações valem para os próximos pedidos.' : 'Complete seus dados para conseguir fechar sua encomenda. Seu login continua o mesmo.';
   if (!account.profile) $('#profile-details').open = true;
   $('#checkout-history').innerHTML = account.checkouts.length ? account.checkouts.map(order=>orderCard(order)).join('') : '<p class="empty-history">As encomendas aceitas no site aparecerão aqui.</p>';
   renderCheckout();
@@ -72,7 +74,7 @@ export function renderCommerce(account) {
 function renderCheckout() {
   const items = cart();
   if (receipt) {
-    $('#checkout-content').innerHTML = `<div role="status"><h3>Pedido aceito! Agora é com a Saints’.</h3><p>Seu pedido está salvo. O pagamento e a liberação dos pontos serão conferidos pela equipe.</p></div>${orderCard(receipt)}<a class="button button-outline" href="./index.html#sabores">Voltar aos cookies</a>`;
+    $('#checkout-content').innerHTML = `<div role="status"><h3>Pedido aceito! Agora é com a Saints’.</h3><p>Seu pedido está salvo. O pagamento será conferido pela equipe.</p></div>${orderCard(receipt)}<a class="button button-outline" href="./index.html#sabores">Voltar aos cookies</a>`;
     return;
   }
   if (!items.length) {
@@ -85,7 +87,7 @@ function renderCheckout() {
   $('#checkout-content').innerHTML = `<ul class="checkout-items">${items.map(i=>{const p=products.find(p=>p.id===i.id);return `<li><span>${i.quantity}× ${p.name}</span><strong>${money(p.price*i.quantity)}</strong></li>`;}).join('')}</ul>
     <p class="checkout-total">Total dos cookies <strong>${money(total)}</strong></p>
     <p>Retirada com a Saints’, com horário a combinar. Pagamento preferido: <strong>${current.profile ? payments[current.profile.payment_preference] : 'complete seus dados acima'}</strong>.</p>
-    <p>Ao confirmar, sua encomenda será aceita imediatamente. Este ambiente é de testes; não há cobrança automática. Os pontos entram após a conferência do pagamento.</p>
+    <p>Ao confirmar, sua encomenda será aceita imediatamente. Este ambiente é de testes; não há cobrança automática.</p>
     <form id="checkout-form"><label class="check-label"><input name="whatsapp_consent" type="checkbox" ${consentChecked ? 'checked' : ''}><span>Autorizo a Saints’ Cookies a enviar a confirmação e atualizações deste pedido ao meu WhatsApp.</span></label>
     <p class="field-help">Se o envio estiver indisponível, seu pedido continuará salvo e o comprovante ficará disponível aqui. Você também pode encomendar sem receber mensagens.</p>
     <button type="submit" class="button button-primary" ${current.profile ? '' : 'disabled'}>Confirmar e aceitar encomenda</button></form>
@@ -127,10 +129,15 @@ export function setupCommerce(actions) {
     finally { submitting = false; if(button.isConnected) { button.disabled = false; if(form.id==='checkout-form') button.textContent='Confirmar e aceitar encomenda'; } }
   });
   document.addEventListener('click',async event=>{
-    const button = event.target.closest('[data-copy-receipt],[data-retry-receipt]');
+    const button = event.target.closest('[data-copy-receipt],[data-retry-receipt],[data-confirm-payment]');
     if(!button || button.disabled) return;
     try {
-      if(button.dataset.copyReceipt) {
+      if(button.dataset.confirmPayment) {
+        if(!confirm('Você conferiu o recebimento do pagamento deste pedido?')) return;
+        button.disabled=true;
+        await api(`/admin/checkouts/${button.dataset.confirmPayment}/confirm-payment`,{});
+        await reload();feedback('Pagamento confirmado.');
+      } else if(button.dataset.copyReceipt) {
         const order = current.checkouts.find(o=>o.id===button.dataset.copyReceipt) || receipt;
         const value = receiptText(order);
         try { await navigator.clipboard.writeText(value); feedback('Comprovante copiado.'); }

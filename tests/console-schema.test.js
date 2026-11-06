@@ -7,7 +7,7 @@ for (const incremental of [false,true]) test(`console ${incremental ? 'upgrade' 
   const db=new DatabaseSync(':memory:');
   try {
     if (incremental) db.exec(readFileSync('migrations/0001_loyalty.sql','utf8'));
-    const filename=incremental ? 'CREDITOS-D1-ATUALIZACAO-0002.sql' : 'CREDITOS-D1-INICIAL.sql';
+    const filename=incremental ? 'D1-ATUALIZACAO-0002.sql' : 'D1-INICIAL.sql';
     const pasted=readFileSync(`docs/${filename}`,'utf8').replace(/[\r\n]+/g,' ');
     db.exec(pasted);db.exec(pasted);
     assert.equal(db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name IN ('customer_profiles','checkout_orders','checkout_items','whatsapp_outbox')").get().n,4);
@@ -18,7 +18,7 @@ for (const incremental of [false,true]) test(`console ${incremental ? 'upgrade' 
 test('the console initializer can be repeated without resetting customers, points or stock', () => {
   const db = new DatabaseSync(':memory:');
   try {
-    const sql = readFileSync('docs/CREDITOS-D1-INICIAL.sql','utf8');
+    const sql = readFileSync('docs/D1-INICIAL.sql','utf8');
     db.exec(sql);
     db.exec(`
       INSERT INTO users(id,name,email,password_hash) VALUES ('customer','Cliente de teste','schema@example.test','not-an-authentication-hash');
@@ -44,7 +44,7 @@ for (const hasHistory of [false,true]) test(`incremental checkout migration pres
       db.exec("INSERT INTO d1_migrations(name) VALUES('0001_loyalty.sql')");
     }
     db.exec("INSERT INTO users(id,name,email,password_hash) VALUES('old','Conta existente','old@example.test','existing-hash')");
-    const sql=readFileSync('docs/CREDITOS-D1-ATUALIZACAO-0002.sql','utf8');
+    const sql=readFileSync('docs/D1-ATUALIZACAO-0002.sql','utf8');
     db.exec(sql);
     db.exec("INSERT INTO customer_profiles(user_id,phone,address,payment_preference) VALUES('old','5511999999999','Rua dos Testes, 123, São Paulo, SP','pix')");
     db.exec(sql);

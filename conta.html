@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#fbf9f4">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="same-origin">
+  <link rel="icon" href="/favicon-round.ico">
+  <title>Minha conta — Saints’ Cookies</title>
+</head>
+<body class="account-page">
+  <div class="announcement">MINHA CONTA SAINTS’ · AMBIENTE DE TESTES</div>
+  <header class="header account-header">
+    <a class="brand" href="./index.html" aria-label="Saints’ Cookies, início"><span>saints’<small>COOKIES</small></span></a>
+    <a class="account-back" href="./index.html#sabores">← Voltar aos cookies</a>
+    <button id="sign-out" class="button button-outline" hidden>Sair da conta</button>
+  </header>
+  <main class="account-main">
+    <div class="account-intro"><p class="eyebrow">BOM TER VOCÊ POR PERTO</p><h1>Seu cantinho<br><em>na Saints’.</em></h1><p>Entre para cuidar dos seus dados,<br>fechar encomendas e acompanhar cada pedido.</p></div>
+    <p class="test-notice">Esta é uma versão de testes. Encomendas são aceitas neste banco de testes; não há cobrança automática nem entrega real. Confira seus dados e acompanhe suas encomendas por aqui.</p>
+    <div id="feedback" role="status" aria-live="polite"></div>
+    <section id="auth-panel" class="auth-card" hidden aria-label="Acesso à minha conta Saints’">
+      <div class="auth-tabs" role="group" aria-label="Acesso"><button class="active" data-auth="login" aria-pressed="true">Entrar</button><button data-auth="register" aria-pressed="false">Criar minha conta</button></div>
+      <h2 id="auth-title">Bom ter você <em>por aqui.</em></h2>
+      <form id="auth-form">
+        <fieldset id="registration-fields" hidden disabled>
+          <label>Seu nome<input name="name" autocomplete="name" minlength="2" maxlength="80" required></label>
+          <label>Telefone do WhatsApp<input name="phone" type="tel" autocomplete="tel" maxlength="22" placeholder="(11) 99999-9999" required></label>
+          <label>Endereço completo<input name="address" autocomplete="street-address" minlength="10" maxlength="400" placeholder="Rua, número, bairro, cidade, estado e CEP" required></label>
+          <label>Pagamento preferido<select aria-label="Pagamento preferido" name="payment_preference" required><option value="">Selecione uma opção</option><option value="pix">Pix</option><option value="credit_card">Cartão de crédito</option><option value="debit_card">Cartão de débito</option><option value="cash">Dinheiro</option></select></label>
+          <p class="field-help">Usamos estes dados para identificar sua encomenda e combinar a retirada. A preferência de pagamento não realiza nenhuma cobrança.</p>
+        </fieldset>
+        <label>E-mail<input name="email" type="email" autocomplete="username" maxlength="254" required></label>
+        <label>Senha<input name="password" type="password" autocomplete="current-password" minlength="12" maxlength="128" required></label>
+        <p class="field-help">Use uma senha de pelo menos 12 caracteres. Nesta versão de testes, ainda não há recuperação de senha por e-mail.</p>
+        <button class="button button-primary" type="submit" id="auth-submit">Entrar na minha conta <svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></button>
+      </form>
+    </section>
+    <section id="account-panel" hidden aria-label="Minha conta">
+      <div class="account-welcome"><div><p class="eyebrow">SEU CANTINHO NA SAINTS’</p><h2>Olá, <em id="customer-name"></em></h2></div><div><p id="customer-email"></p><button class="text-link refresh-account" id="refresh-account">Atualizar minha conta</button></div></div>
+      <details id="profile-details" class="profile-card">
+        <summary>Meus dados para encomendas</summary>
+        <p id="profile-help" class="field-help"></p>
+        <form id="profile-form" class="field-grid">
+          <label>Nome completo<input name="name" autocomplete="name" minlength="2" maxlength="80" required></label>
+          <label>Telefone cadastrado<input name="phone" type="tel" autocomplete="tel" maxlength="22" required></label>
+          <label class="full-field">Endereço cadastrado<input name="address" autocomplete="street-address" minlength="10" maxlength="400" required></label>
+          <label>Forma de pagamento preferida<select aria-label="Forma de pagamento preferida" name="payment_preference" required><option value="">Selecione uma opção</option><option value="pix">Pix</option><option value="credit_card">Cartão de crédito</option><option value="debit_card">Cartão de débito</option><option value="cash">Dinheiro</option></select></label>
+          <button type="submit" class="button button-primary">Salvar meus dados</button>
+        </form>
+      </details>
+      <section id="checkout-section" class="checkout-card" aria-label="Fechamento da encomenda"><p class="eyebrow">DA SACOLA PARA O SEU DIA</p><h2>Confirmar minha <em>encomenda.</em></h2><div id="checkout-content"></div></section>
+      <section class="history-card web-orders"><h3>Encomendas feitas no site</h3><div id="checkout-history"></div></section>
+    </section>
+    <section id="admin-panel" class="admin-panel" hidden aria-label="Painel administrativo">
+      <p class="eyebrow">ÁREA EXCLUSIVA DA EQUIPE</p>
+      <div class="admin-heading"><h2>Cuidar de cada <em>encomenda.</em></h2><button class="button button-outline" id="refresh-admin">Atualizar painel</button></div>
+      <p class="field-help">Confira os dados da encomenda e registre o pagamento somente após verificar o recebimento.</p>
+      <p id="whatsapp-config-status" class="field-help"></p><div id="admin-checkouts"></div>
+    </section>
+  </main>
+  <footer><a class="brand" href="./index.html"><span>saints’<small>COOKIES</small></span></a><p>Uma conta para seus momentos mais gostosos.</p><a href="https://www.instagram.com/saintscookies/" target="_blank" rel="noopener noreferrer">Falar com a Saints’ <svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></a></footer>
+  <script type="module" src="/src/conta.js"></script>
+</body>
+</html>
