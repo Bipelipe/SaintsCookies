@@ -18,7 +18,8 @@
     "test:account": "playwright test --config playwright.account.config.js",
     "site:pages:dev": "node scripts/local-pages.mjs",
     "site:sql": "node scripts/generate-d1-console.mjs",
-    "test:account:pages": "playwright test --config playwright.pages-account.config.js"
+    "test:account:pages": "playwright test --config playwright.pages-account.config.js",
+    "site:roles": "node scripts/prepare-admin-setup.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",

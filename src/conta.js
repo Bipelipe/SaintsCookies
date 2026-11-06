@@ -5,6 +5,7 @@ import '@fontsource/playfair-display/latin-400.css';
 import '@fontsource/playfair-display/latin-400-italic.css';
 import './style.css';
 import './conta.css';
+import './admin.css';
 import { api } from './api.js';
 import { renderCommerce, renderAdminCheckouts, setupCommerce } from './account-commerce.js';
 
@@ -19,17 +20,21 @@ function feedback(message, error = false) {
 function showAuth() {
   account = undefined;
   $('#auth-panel').hidden = false;
-  $('#account-panel').hidden = $('#admin-panel').hidden = $('#sign-out').hidden = true;
+  $('#account-panel').hidden = $('#admin-panel').hidden = $('#sign-out').hidden = $('#admin-navigation').hidden = true;
 }
 function renderAccount() {
   $('#auth-panel').hidden = true;
   $('#account-panel').hidden = $('#sign-out').hidden = false;
   $('#customer-name').textContent = account.user.name;
   $('#customer-email').textContent = account.user.email;
+  const roleNames={admin:'Admin',owner:'Dono',customer:'Cliente'};
+  $('#customer-role').textContent = roleNames[account.user.role];
+  $('#customer-role').className = `account-role role-badge ${account.user.role}`;
+  $('#admin-navigation').hidden=account.user.role!=='admin';
   renderCommerce(account);
 }
 async function loadAdmin() {
-  if (account?.user.role !== 'admin') { $('#admin-panel').hidden = true; return; }
+  if (!['admin','owner'].includes(account?.user.role)) { $('#admin-panel').hidden = true; return; }
   const data = await api('/admin/overview');
   $('#admin-panel').hidden = false;
   renderAdminCheckouts(data);
@@ -69,7 +74,9 @@ document.addEventListener('submit', async event => {
   button.disabled = true; feedback('');
   try {
     await api(`/auth/${mode}`, Object.fromEntries(new FormData(form)));
-    form.reset(); await load(); feedback('Bem-vindo à Saints’!');
+    form.reset(); await load();
+    if(new URLSearchParams(location.search).get('next')==='admin'&&account?.user.role==='admin'){location.href='./admin.html';return;}
+    feedback('Bem-vindo à Saints’!');
   } catch (error) { feedback(error.message, true); if (error.status === 401) showAuth(); }
   finally { button.disabled = false; }
 });

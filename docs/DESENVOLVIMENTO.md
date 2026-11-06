@@ -31,10 +31,12 @@ Cadastre a conta primeiro. Para promover uma conta local já cadastrada:
 npm run site:admin -- --email voce@exemplo.com --local
 ```
 
-No D1 remoto, o proprietário pode executar pelo Console:
+Após aplicar a migração 0003, no D1 remoto o proprietário pode executar pelo Console:
 
 ```sql
-UPDATE users SET role='admin' WHERE email='email-da-conta-ja-cadastrada';
+INSERT INTO account_roles(user_id,role)
+SELECT id,'admin' FROM users WHERE email='email-da-conta-ja-cadastrada'
+ON CONFLICT(user_id) DO UPDATE SET role='admin',updated_at=unixepoch();
 ```
 
 Substitua o e-mail e entre novamente no site. O cadastro público sempre cria clientes e não permite escolher o papel de administrador. Não existe senha administrativa padrão.
@@ -46,6 +48,8 @@ Substitua o e-mail e entre novamente no site. O cadastro público sempre cria cl
 - Binding: `DB`.
 - D1 mantido: `saintscookies-creditos`.
 - Database ID: `0e7de326-abe6-4f13-921f-6d2d1d107d47` (identificador público, não uma credencial).
+
+Para os cargos Admin/Dono/Cliente e o painel de contas, consulte [ADMINISTRACAO.md](ADMINISTRACAO.md). Essa funcionalidade acrescenta a migração 0003, sem alterar as senhas ou os pedidos.
 
 A remoção do sistema de pontos não renomeia, não recria e não limpa o banco. A prévia reutiliza os mesmos registros. `wrangler.jsonc` mantém o vínculo apenas em Preview. A versão principal não recebe esse banco de teste.
 

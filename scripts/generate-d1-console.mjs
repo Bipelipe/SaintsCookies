@@ -19,5 +19,8 @@ const checkoutHistory = "\nINSERT OR IGNORE INTO d1_migrations (name) VALUES ('0
 // then swallow the entire script, so keep instructions in the Markdown guide.
 const forConsole = sql => sql.split(/\r?\n/).filter(line => !line.trimStart().startsWith('--')).join('\n').trim() + '\n';
 writeFileSync('docs/D1-ATUALIZACAO-0002.sql', forConsole(history + checkout + checkoutHistory));
-writeFileSync('docs/D1-INICIAL.sql', forConsole(schema + history + checkout + checkoutHistory));
+const roles=readFileSync('migrations/0003_account_roles.sql','utf8');
+const rolesHistory="\nINSERT OR IGNORE INTO d1_migrations (name) VALUES ('0003_account_roles.sql');\n";
+writeFileSync('docs/D1-ATUALIZACAO-0003.sql',forConsole(history+checkoutHistory+roles+rolesHistory));
+writeFileSync('docs/D1-INICIAL.sql', forConsole(schema + history + checkout + checkoutHistory + roles + rolesHistory));
 console.log('SQL inicial para o Console D1 preparado.');

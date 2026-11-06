@@ -1,5 +1,7 @@
 import { hashPassword, verifyPassword, randomToken, digest, sessionToken, sessionCookie } from './security.js';
 import { databaseHealth } from './health.js';
+import { effectiveUser,capabilities } from './roles.js';
+import { administration,AdminError } from './admin.js';
 import { validateProfile, profileFor, checkoutReady } from './profile.js';
 import { CheckoutError, acceptCheckout, listCheckouts } from './checkout.js';
 import { dispatchReceipt, whatsappConfigured, whatsappWebhook } from './whatsapp.js';
@@ -10,7 +12,7 @@ class HttpError extends Error {
 const fail = (status, message) => { throw new HttpError(status, message); };
 const json = (data, status = 200, headers = {}) => Response.json(data, { status, headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...headers } });
 const text = (value, max = 200) => typeof value === 'string' ? value.trim().slice(0, max) : '';
-const publicUser = user => ({ id: user.id, name: user.name, email: user.email, role: user.role });
+const publicUser = user => ({ id: user.id, name: user.name, email: user.email, role: user.role, permissions:capabilities(user.role) });
 async function body(request) {
   if (!request.headers.get('Content-Type')?.startsWith('application/json')) fail(415, 'Envie dados em JSON.');
   if (Number(request.headers.get('Content-Length')) > 8192) fail(413, 'Solicitação muito grande.');
@@ -42,7 +44,7 @@ async function currentUser(request, db) {
   if (!token || !/^[a-f0-9]{64}$/.test(token)) fail(401, 'Entre na sua conta para continuar.');
   const user = await db.prepare('SELECT u.* FROM users u JOIN sessions s ON s.user_id = u.id WHERE s.token_hash = ? AND s.expires_at > unixepoch()').bind(await digest(token)).first();
   if (!user) fail(401, 'Sua sessão expirou. Entre novamente.');
-  return user;
+  return effectiveUser(db,user);
 }
 async function createSession(request, db, user) {
   const token = randomToken();
@@ -50,7 +52,7 @@ async function createSession(request, db, user) {
     db.prepare('DELETE FROM sessions WHERE expires_at <= unixepoch()'),
     db.prepare('INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, unixepoch() + 604800)').bind(await digest(token), user.id),
   ]);
-  return json({ user: publicUser(user) }, 200, { 'Set-Cookie': sessionCookie(request, token) });
+  return json({ user: publicUser(await effectiveUser(db,user)) }, 200, { 'Set-Cookie': sessionCookie(request, token) });
 }
 async function account(db, user) {
   return { user: publicUser(user), profile: await profileFor(db,user.id), checkouts: await listCheckouts(db,user.id) };
@@ -123,7 +125,10 @@ async function api(request, env) {
     return json({order:result.order},result.created ? 201 : 200);
   }
   if (path.startsWith('/api/admin/')) {
-    if (user.role !== 'admin') fail(403, 'Esta área é exclusiva da equipe Saints’.');
+    const operational = (path==='/api/admin/overview'&&method==='GET') || (/^\/api\/admin\/checkouts\/[a-f0-9-]+\/(confirm-payment|retry)$/.test(path)&&method==='POST');
+    if (user.role !== 'admin' && !(user.role==='owner'&&operational)) fail(403, 'Esta área é exclusiva da equipe autorizada Saints’.');
+    const result=await administration(request,db,user,body);
+    if(result!==null) return json(result);
     if (path === '/api/admin/overview' && method === 'GET') {
       return json({ checkouts:await listCheckouts(db), whatsapp_enabled:whatsappConfigured(env) });
     }
@@ -176,7 +181,7 @@ export default {
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
     try { return await api(request,env); }
     catch (error) {
-      if (error instanceof HttpError || error instanceof CheckoutError) return json({ error: error.message },error.status);
+      if (error instanceof HttpError || error instanceof CheckoutError || error instanceof AdminError) return json({ error: error.message },error.status);
       // Do not log request bodies, credentials, or SQL values.
       console.error('Account request failed:', error.name || 'Error');
       return json({ error: 'Não foi possível concluir agora. Tente novamente.' },500);

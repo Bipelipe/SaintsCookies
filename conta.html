@@ -14,6 +14,7 @@
   <header class="header account-header">
     <a class="brand" href="./index.html" aria-label="Saints’ Cookies, início"><span>saints’<small>COOKIES</small></span></a>
     <a class="account-back" href="./index.html#sabores">← Voltar aos cookies</a>
+    <a id="admin-navigation" class="button button-outline" href="./admin.html" hidden>Administração</a>
     <button id="sign-out" class="button button-outline" hidden>Sair da conta</button>
   </header>
   <main class="account-main">
@@ -38,7 +39,7 @@
       </form>
     </section>
     <section id="account-panel" hidden aria-label="Minha conta">
-      <div class="account-welcome"><div><p class="eyebrow">SEU CANTINHO NA SAINTS’</p><h2>Olá, <em id="customer-name"></em></h2></div><div><p id="customer-email"></p><button class="text-link refresh-account" id="refresh-account">Atualizar minha conta</button></div></div>
+      <div class="account-welcome"><div><p class="eyebrow">SEU CANTINHO NA SAINTS’</p><h2>Olá, <em id="customer-name"></em></h2><p class="account-role" id="customer-role"></p></div><div><p id="customer-email"></p><button class="text-link refresh-account" id="refresh-account">Atualizar minha conta</button></div></div>
       <details id="profile-details" class="profile-card">
         <summary>Meus dados para encomendas</summary>
         <p id="profile-help" class="field-help"></p>
@@ -53,7 +54,7 @@
       <section id="checkout-section" class="checkout-card" aria-label="Fechamento da encomenda"><p class="eyebrow">DA SACOLA PARA O SEU DIA</p><h2>Confirmar minha <em>encomenda.</em></h2><div id="checkout-content"></div></section>
       <section class="history-card web-orders"><h3>Encomendas feitas no site</h3><div id="checkout-history"></div></section>
     </section>
-    <section id="admin-panel" class="admin-panel" hidden aria-label="Painel administrativo">
+    <section id="admin-panel" class="admin-panel" hidden aria-label="Gestão de encomendas">
       <p class="eyebrow">ÁREA EXCLUSIVA DA EQUIPE</p>
       <div class="admin-heading"><h2>Cuidar de cada <em>encomenda.</em></h2><button class="button button-outline" id="refresh-admin">Atualizar painel</button></div>
       <p class="field-help">Confira os dados da encomenda e registre o pagamento somente após verificar o recebimento.</p>

@@ -10,7 +10,7 @@ if (remote) {
   if (setup.status !== 0) process.exit(setup.status || 1);
 }
 const safe = email.toLowerCase().replace(/'/g, "''");
-const sql = `UPDATE users SET role='admin' WHERE email='${safe}' RETURNING email,role;`;
+const sql = `INSERT INTO account_roles(user_id,role) SELECT id,'admin' FROM users WHERE email='${safe}' ON CONFLICT(user_id) DO UPDATE SET role='admin',updated_at=unixepoch() RETURNING user_id,role;`;
 const command = ['scripts/wrangler.mjs','d1','execute','DB','--config',remote ? 'wrangler.dev.remote.json' : 'wrangler.dev.json',remote ? '--remote' : '--local','--command',sql,'--json'];
 if (!remote) command.push('--persist-to',process.env.SAINTS_LOCAL_STATE || '.wrangler/state');
 const result = spawnSync(process.execPath, command, { encoding:'utf8' });

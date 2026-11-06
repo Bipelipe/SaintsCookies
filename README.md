@@ -13,7 +13,9 @@ O sistema de pontos, brindes e resgates foi retirado. A área **Minha conta** ma
 - Site principal no Pages: <https://saintscookies.pages.dev/>.
 - Guia do ambiente, banco e contas: [DESENVOLVIMENTO.md](docs/DESENVOLVIMENTO.md).
 
-O Pages usa Functions e o D1 existente `saintscookies-creditos`. O nome do banco foi mantido para preservar as contas e os pedidos cadastrados. A mudança não exige SQL novo no banco já inicializado.
+O Pages usa Functions e o D1 existente `saintscookies-creditos`. O nome do banco foi mantido para preservar as contas e os pedidos cadastrados. A remoção da fidelidade preservou os dados; o novo painel de cargos exige a atualização aditiva 0003 descrita no guia de administração.
+
+Consulte também [o guia de cargos e administração](docs/ADMINISTRACAO.md). O novo painel de contas usa a migração aditiva 0003; logins existentes continuam funcionando antes da ativação do painel.
 
 ## Executar
 
