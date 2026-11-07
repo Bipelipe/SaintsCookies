@@ -13,7 +13,26 @@ async function customer(db,id='customer') {
 test('profile validation requires Brazilian DDD, complete address and known payment method',()=>{
   assert.equal(validateProfile(profile).phone,'5511999999999');
   assert.equal(validateProfile({...profile,phone:'+55 (11) 99999-9999'}).phone,'5511999999999');
-  for(const invalid of [{phone:'123'}, {address:'Rua'}, {payment_preference:'free'}, {phone:'abc11999999999'}]) assert.throws(()=>validateProfile({...profile,...invalid}));
+  assert.equal(validateProfile({...profile,payment_preference:'cash'}).payment_preference,'cash');
+  for(const invalid of [{phone:'123'}, {address:'Rua'}, {payment_preference:'free'}, {payment_preference:'credit_card'}, {payment_preference:'debit_card'}, {phone:'abc11999999999'}]) assert.throws(()=>validateProfile({...profile,...invalid}));
+});
+test('a legacy card preference requires a new choice without changing or blocking old receipts',async()=>{
+  const db=testDatabase();
+  try {
+    const user=await customer(db);
+    const request={items:[{id:'brown-butter',quantity:1}],request_key:'old-card-order',whatsapp_consent:false};
+    const first=await acceptCheckout(db,{},user,request);
+    await db.prepare("UPDATE checkout_orders SET payment_preference='credit_card' WHERE id=?").bind(first.order.id).run();
+    await db.prepare("UPDATE customer_profiles SET payment_preference='credit_card' WHERE user_id=?").bind(user.id).run();
+    const recovered=await acceptCheckout(db,{},user,request);
+    assert.equal(recovered.created,false);
+    assert.equal(recovered.order.payment_preference,'credit_card');
+    await assert.rejects(acceptCheckout(db,{},user,{...request,request_key:'new-order'}),/escolha Pix ou Dinheiro/);
+    await db.prepare("UPDATE customer_profiles SET payment_preference='cash' WHERE user_id=?").bind(user.id).run();
+    const next=await acceptCheckout(db,{},user,{...request,request_key:'new-order'});
+    assert.equal(next.order.payment_preference,'cash');
+    assert.equal((await listCheckouts(db,user.id)).find(o=>o.id===first.order.id).payment_preference,'credit_card');
+  } finally {db.close();}
 });
 test('checkout ignores client prices and rejects unknown, duplicate or invalid items',()=>{
   assert.equal(priceCart([{id:'brown-butter',quantity:2,price:0},{id:'red-velvet',quantity:1}]).amount_cents,3600);

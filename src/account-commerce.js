@@ -5,6 +5,7 @@ import { formatBrazilPhone } from './phone.js';
 const $ = selector => document.querySelector(selector);
 const escape = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const payments = { pix:'Pix',credit_card:'Cartão de crédito',debit_card:'Cartão de débito',cash:'Dinheiro' };
+const hasPayment = profile => ['pix','cash'].includes(profile?.payment_preference);
 const paymentStatus = {pending:'Pagamento pendente',confirmed:'Pagamento conferido pela equipe',not_approved:'Pagamento não confirmado pela equipe'};
 const delivery = {
   pending:'Aguardando envio',not_configured:'WhatsApp ainda não ativado',opted_out:'Sem autorização para WhatsApp',
@@ -68,8 +69,8 @@ export function renderCommerce(account) {
   form.elements.name.value = account.user.name;
   for (const key of ['phone','address','payment_preference']) form.elements[key].value = account.profile?.[key] || '';
   form.elements.phone.value = formatBrazilPhone(account.profile?.phone);
-  $('#profile-help').textContent = account.profile ? 'Confira seus dados antes de fechar uma encomenda. Alterações valem para os próximos pedidos.' : 'Complete seus dados para conseguir fechar sua encomenda. Seu login continua o mesmo.';
-  if (!account.profile) $('#profile-details').open = true;
+  $('#profile-help').textContent = account.profile ? (hasPayment(account.profile) ? 'Confira seus dados antes de fechar uma encomenda. Alterações valem para os próximos pedidos.' : 'Escolha Pix ou Dinheiro e salve seus dados antes de fechar uma nova encomenda.') : 'Complete seus dados para conseguir fechar sua encomenda. Seu login continua o mesmo.';
+  if (!hasPayment(account.profile)) $('#profile-details').open = true;
   $('#checkout-history').innerHTML = account.checkouts.length ? account.checkouts.map(order=>orderCard(order)).join('') : '<p class="empty-history">As encomendas aceitas no site aparecerão aqui.</p>';
   renderCheckout();
 }
@@ -88,11 +89,11 @@ function renderCheckout() {
   const consentChecked = pending?.itemsKey === JSON.stringify(items) && pending.consent === true;
   $('#checkout-content').innerHTML = `<ul class="checkout-items">${items.map(i=>{const p=products.find(p=>p.id===i.id);return `<li><span>${i.quantity}× ${p.name}<small class="checkout-unit">${productUnit(p)}</small></span><strong>${money(p.price*i.quantity)}</strong></li>`;}).join('')}</ul>
     <p class="checkout-total">Total dos produtos <strong>${money(total)}</strong></p>
-    <p>Retirada com a Saints’, com horário a combinar. Pagamento preferido: <strong>${current.profile ? payments[current.profile.payment_preference] : 'complete seus dados acima'}</strong>.</p>
+    <p>Retirada com a Saints’, com horário a combinar. Pagamento preferido: <strong>${hasPayment(current.profile) ? payments[current.profile.payment_preference] : 'escolha Pix ou Dinheiro nos seus dados acima'}</strong>.</p>
     <p>Ao confirmar, sua encomenda será aceita imediatamente. Este ambiente é de testes; não há cobrança automática.</p>
     <form id="checkout-form"><label class="check-label"><input name="whatsapp_consent" type="checkbox" ${consentChecked ? 'checked' : ''}><span>Autorizo a Saints’ Cookies a enviar a confirmação e atualizações deste pedido ao meu WhatsApp.</span></label>
     <p class="field-help">Se o envio estiver indisponível, seu pedido continuará salvo e o comprovante ficará disponível aqui. Você também pode encomendar sem receber mensagens.</p>
-    <button type="submit" class="button button-primary" ${current.profile ? '' : 'disabled'}>Confirmar e aceitar encomenda</button></form>
+    <button type="submit" class="button button-primary" ${hasPayment(current.profile) ? '' : 'disabled'}>Confirmar e aceitar encomenda</button></form>
     <p class="field-help">Confira a sacola antes de confirmar. <a href="./index.html#sabores">Alterar minha seleção</a></p>`;
 }
 export function renderAdminCheckouts(data) {

@@ -1,5 +1,5 @@
 import { products,productLabel } from '../src/products.js';
-import { checkoutReady, profileFor, consentText } from './profile.js';
+import { checkoutReady, profileFor, consentText, availablePayment } from './profile.js';
 import { dispatchReceipt } from './whatsapp.js';
 
 export class CheckoutError extends Error {
@@ -54,6 +54,7 @@ export async function acceptCheckout(db,env,user,data) {
   const { items,amount_cents } = priceCart(selected);
   const profile = await profileFor(db,user.id);
   if (!profile) reject(400,'Complete seu telefone, endereço e pagamento preferido antes de fechar o pedido.');
+  if (!availablePayment(profile.payment_preference)) reject(400,'Atualize seus dados e escolha Pix ou Dinheiro antes de fechar o pedido.');
   const id = crypto.randomUUID(), paymentRecordId = crypto.randomUUID();
   const number = `SC-${id.replaceAll('-','').toUpperCase()}`;
   const note = `Pedido ${number} aceito no site; pagamento aguarda conferência.`;

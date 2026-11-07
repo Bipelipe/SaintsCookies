@@ -1,4 +1,6 @@
 export const payments = { pix: 'Pix', credit_card: 'Cartão de crédito', debit_card: 'Cartão de débito', cash: 'Dinheiro' };
+// Keep historical order labels above; only these methods are offered now.
+export const availablePayment = value => value === 'pix' || value === 'cash';
 export const consentText = 'Autorizo a Saints’ Cookies a enviar a confirmação e atualizações deste pedido ao meu WhatsApp.';
 
 export function validateProfile(data) {
@@ -7,7 +9,7 @@ export function validateProfile(data) {
   if (!/^55[1-9]\d(?:9\d{8}|[2-5]\d{7})$/.test(normalized)) throw new Error('Informe um telefone brasileiro válido, com DDD.');
   const address = typeof data.address === 'string' ? data.address.trim() : '';
   if (address.length < 10 || address.length > 400 || /[\x00-\x1f]/.test(address)) throw new Error('Informe seu endereço completo, entre 10 e 400 caracteres.');
-  if (!Object.hasOwn(payments, data.payment_preference)) throw new Error('Escolha sua forma preferida de pagamento.');
+  if (!availablePayment(data.payment_preference)) throw new Error('Escolha Pix ou Dinheiro como forma preferida de pagamento.');
   return { phone: normalized, address, payment_preference: data.payment_preference };
 }
 export async function checkoutReady(db) {

@@ -19,6 +19,7 @@ async function client(playwright,label,admin=false) {
 async function register(page,person) {
   await page.goto('/conta.html');
   await page.getByRole('button',{name:'Criar minha conta',exact:true}).click();
+  await expect(page.getByLabel('Pagamento preferido',{exact:true}).locator('option')).toHaveText(['Selecione uma opção','Pix','Dinheiro']);
   for(const [label,value] of [['Seu nome',person.name],['Telefone do WhatsApp',person.phone],['Endereço completo',person.address],['E-mail',person.email],['Senha',person.password]]) await page.getByLabel(label,{exact:true}).fill(value);
   await page.getByLabel('Pagamento preferido',{exact:true}).selectOption('pix');
   await page.locator('#auth-submit').click();
@@ -32,6 +33,8 @@ test('signup, profile editing, order checkout and logout remain available withou
   await expect(page.locator('#admin-panel')).toBeHidden();
   await expect(page.locator('main')).not.toContainText(/pontos|resgates|recompensa|brindes/i);
   await page.locator('#profile-details summary').click();
+  await expect(page.getByLabel('Forma de pagamento preferida',{exact:true}).locator('option')).toHaveText(['Selecione uma opção','Pix','Dinheiro']);
+  await page.getByLabel('Forma de pagamento preferida',{exact:true}).selectOption('cash');
   await page.getByLabel('Nome completo',{exact:true}).fill('Nome atualizado');
   await page.getByLabel('Endereço cadastrado',{exact:true}).fill('Rua Atualizada, 456, São Paulo, SP');
   await page.getByRole('button',{name:'Salvar meus dados',exact:true}).click();
@@ -39,6 +42,7 @@ test('signup, profile editing, order checkout and logout remain available withou
   await page.reload();
   await expect(page.locator('#customer-name')).toHaveText('Nome atualizado');
   expect((await account(page.request)).profile.address).toBe('Rua Atualizada, 456, São Paulo, SP');
+  expect((await account(page.request)).profile.payment_preference).toBe('cash');
   await page.getByRole('button',{name:'Sair da conta',exact:true}).click();
   await expect(page.locator('#auth-panel')).toBeVisible();
   expect((await page.request.get('/api/account')).status()).toBe(401);
