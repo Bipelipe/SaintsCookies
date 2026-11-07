@@ -7,6 +7,7 @@ import './style.css';
 import './conta.css';
 import './admin.css';
 import { api } from './api.js';
+import { fulfillmentLabel } from './shipping.js';
 import { money } from './products.js';
 
 const $=selector=>document.querySelector(selector);
@@ -83,7 +84,7 @@ async function userDetail(id,page=1) {
 async function orderDetail(id) {
   const {order:o}=await api(`/admin/orders/${id}`);orderId=id;updateUrl();
   $('#order-detail').hidden=false;
-  $('#order-detail').innerHTML=`<h2>Pedido <em>${escape(o.number)}</em></h2><dl class="detail-grid"><div><dt>Cliente na encomenda</dt><dd>${escape(o.customer_name)}</dd></div><div><dt>Total dos produtos</dt><dd>${money(o.amount_cents/100)}</dd></div><div><dt>Situação</dt><dd>${paymentStatus[o.payment_status]}</dd></div><div><dt>Recebido em</dt><dd>${date(o.created_at)}</dd></div><div><dt>Telefone informado no pedido</dt><dd>+${escape(o.phone)}</dd></div><div><dt>Endereço informado no pedido</dt><dd>${escape(o.address)}</dd></div><div><dt>Pagamento preferido</dt><dd>${payments[o.payment_preference]}</dd></div><div><dt>Atendimento</dt><dd>Retirada com a Saints’</dd></div></dl><div class="admin-order"><ul>${o.items.map(i=>`<li>${i.quantity}× ${escape(i.product_name)} · ${money(i.unit_cents*i.quantity/100)}</li>`).join('')}</ul></div><a href="./admin.html?user=${o.user_id}" data-open-user="${o.user_id}">Consultar conta e histórico deste cliente</a>${o.payment_status==='pending'?`<p><button class="button button-primary" data-admin-payment="${o.id}">Confirmar pagamento deste pedido</button></p>`:''}`;
+  $('#order-detail').innerHTML=`<h2>Pedido <em>${escape(o.number)}</em></h2><dl class="detail-grid"><div><dt>Cliente na encomenda</dt><dd>${escape(o.customer_name)}</dd></div><div><dt>Total dos produtos</dt><dd>${money(o.products_cents/100)}</dd></div>${o.fulfillment==='delivery'?`<div><dt>Frete · ${escape(o.region_name)}</dt><dd>${money(o.shipping_cents/100)} (valor de teste)</dd></div>`:''}<div><dt>Total do pedido</dt><dd>${money(o.amount_cents/100)}</dd></div><div><dt>Situação</dt><dd>${paymentStatus[o.payment_status]}</dd></div><div><dt>Recebido em</dt><dd>${date(o.created_at)}</dd></div><div><dt>Telefone informado no pedido</dt><dd>+${escape(o.phone)}</dd></div><div><dt>Endereço informado no pedido</dt><dd>${escape(o.delivery_address||o.address)}</dd></div><div><dt>Pagamento preferido</dt><dd>${payments[o.payment_preference]}</dd></div><div><dt>Atendimento</dt><dd>${escape(fulfillmentLabel(o))}</dd></div></dl><div class="admin-order"><ul>${o.items.map(i=>`<li>${i.quantity}× ${escape(i.product_name)} · ${money(i.unit_cents*i.quantity/100)}</li>`).join('')}</ul></div><a href="./admin.html?user=${o.user_id}" data-open-user="${o.user_id}">Consultar conta e histórico deste cliente</a>${o.payment_status==='pending'?`<p><button class="button button-primary" data-admin-payment="${o.id}">Confirmar pagamento deste pedido</button></p>`:''}`;
 }
 async function refresh() {
   await Promise.all([summary(),users(),orders(),audit()]);

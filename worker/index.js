@@ -1,3 +1,5 @@
+import { ensureShippingSchema } from './shipping-schema.js';
+import { shippingRegions } from '../src/shipping.js';
 import { hashPassword, verifyPassword, randomToken, digest, sessionToken, sessionCookie } from './security.js';
 import { validNewPassword, passwordHelp } from '../src/password-policy.js';
 import { databaseHealth } from './health.js';
@@ -71,7 +73,11 @@ async function api(request, env) {
   if (path === '/api/whatsapp/webhook') return whatsappWebhook(request,env);
   if (!['GET', 'POST'].includes(method)) fail(405, 'Método não permitido.');
   if (method === 'POST' && request.headers.get('Origin') !== url.origin) fail(403, 'Origem da solicitação não permitida.');
-  if (path === '/api/checkout/config' && method === 'GET') return json({ ready:await checkoutReady(db), whatsapp_enabled:whatsappConfigured(env) });
+  if (path === '/api/checkout/config' && method === 'GET') {
+    const ready=await checkoutReady(db);
+    if(ready) await ensureShippingSchema(db);
+    return json({ready,whatsapp_enabled:whatsappConfigured(env),shipping_test:true,shipping_regions:shippingRegions});
+  }
   if (path === '/api/auth/register' && method === 'POST') {
     await rateLimit(request, db, 'register');
     const data = await body(request);

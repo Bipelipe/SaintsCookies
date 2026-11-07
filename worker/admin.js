@@ -1,4 +1,5 @@
 import { rolesReady,roleNames } from './roles.js';
+import { ensureShippingSchema } from './shipping-schema.js';
 import { getCheckout } from './checkout.js';
 
 export class AdminError extends Error {
@@ -10,8 +11,8 @@ const userSelect=`SELECT u.id,u.name,u.email,u.created_at,${role} AS role,p.phon
   (SELECT COUNT(*) FROM checkout_orders c WHERE c.user_id=u.id) AS order_count,
   (SELECT COALESCE(SUM(c.amount_cents),0) FROM checkout_orders c WHERE c.user_id=u.id AND c.payment_status='confirmed') AS paid_cents
   FROM users u LEFT JOIN account_roles ar ON ar.user_id=u.id LEFT JOIN customer_profiles p ON p.user_id=u.id`;
-const orderSelect=`SELECT c.id,c.number,c.user_id,c.customer_name,c.phone,c.address,c.payment_preference,c.fulfillment,c.amount_cents,c.status,c.payment_status,c.created_at,w.status AS whatsapp_status
-  FROM checkout_orders c JOIN whatsapp_outbox w ON w.checkout_id=c.id`;
+const orderSelect=`SELECT c.id,c.number,c.user_id,c.customer_name,c.phone,c.address,c.payment_preference,COALESCE(f.method,'pickup') AS fulfillment,COALESCE(f.products_cents,c.amount_cents) AS products_cents,COALESCE(f.shipping_cents,0) AS shipping_cents,f.region_name,f.delivery_address,c.amount_cents,c.status,c.payment_status,c.created_at,w.status AS whatsapp_status
+  FROM checkout_orders c JOIN whatsapp_outbox w ON w.checkout_id=c.id LEFT JOIN checkout_fulfillment f ON f.checkout_id=c.id`;
 function pagination(params) {
   const page=Number(params.get('page')||1),limit=Number(params.get('limit')||20);
   if(!Number.isSafeInteger(page)||page<1||page>100000||!Number.isInteger(limit)||limit<1||limit>50) fail(400,'Escolha uma página e uma quantidade de registros válidas.');
@@ -55,12 +56,13 @@ export async function administration(request,db,user,readBody) {
   if(!supported) return null;
   if(user.role!=='admin') fail(403,'A administração de contas é exclusiva do admin.');
   if(!await rolesReady(db)) fail(503,'O painel está preparado, mas falta aplicar a atualização 0003 do banco. Consulte o guia de administração.');
+  await ensureShippingSchema(db);
   if(path==='/api/admin/dashboard'&&method==='GET') {
     const counts=(await db.prepare(`SELECT ${role} AS role,COUNT(*) AS total FROM users u LEFT JOIN account_roles ar ON ar.user_id=u.id GROUP BY ${role}`).all()).results;
     const orders=await db.prepare("SELECT COUNT(*) AS total,COALESCE(SUM(payment_status='pending'),0) AS pending,COALESCE(SUM(CASE WHEN payment_status='confirmed' THEN amount_cents ELSE 0 END),0) AS paid_cents FROM checkout_orders").first();
     const tables=[];
     // Curated database view. No arbitrary SQL, password hashes or session tokens.
-    for(const [name,label] of [['users','Contas'],['customer_profiles','Dados cadastrais'],['checkout_orders','Encomendas'],['checkout_items','Itens dos pedidos'],['account_roles','Cargos atribuídos'],['role_changes','Alterações de cargos']]) {
+    for(const [name,label] of [['users','Contas'],['customer_profiles','Dados cadastrais'],['checkout_orders','Encomendas'],['checkout_items','Itens dos pedidos'],['checkout_fulfillment','Retiradas e entregas'],['account_roles','Cargos atribuídos'],['role_changes','Alterações de cargos']]) {
       const result=await db.prepare(`SELECT COUNT(*) AS total FROM ${name}`).first();
       tables.push({name,label,total:result.total});
     }

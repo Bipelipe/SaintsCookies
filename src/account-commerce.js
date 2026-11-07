@@ -1,6 +1,8 @@
 import { products, money, productUnit } from './products.js';
 import { api } from './api.js';
 import { formatBrazilPhone } from './phone.js';
+import { mountFulfillment, fulfillmentRequest, fulfillmentReady, shippingSummary, clearAddressConfirmation } from './fulfillment.js';
+import { fulfillmentLabel } from './shipping.js';
 
 const $ = selector => document.querySelector(selector);
 const escape = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -21,19 +23,19 @@ function cart() {
   let stored; try { stored = JSON.parse(localStorage.getItem('saints-bag') || '{}'); } catch { stored = {}; }
   return products.filter(p=>Number.isInteger(stored?.[p.id]) && stored[p.id]>0 && stored[p.id]<=99).map(p=>({id:p.id,quantity:stored[p.id]}));
 }
-function intent(items, consent) {
+function intent(items, consent, fulfillment) {
   const itemsKey = JSON.stringify(items), key = intentStorageKey();
   let saved = savedIntent();
-  if (!saved || saved.itemsKey !== itemsKey) {
-    saved = {itemsKey,consent,request_key:crypto.randomUUID()};
+  if (!saved) {
+    saved = {itemsKey,consent,fulfillment,request_key:crypto.randomUUID()};
     // If storage is unavailable, do not risk a second order after a lost response.
     sessionStorage.setItem(key,JSON.stringify(saved));
   }
-  if(saved.consent !== consent) throw new Error('Já existe uma tentativa para esta sacola. Atualize a página para conferir o resultado antes de alterar o contato pelo WhatsApp.');
+  if(saved.itemsKey!==itemsKey || saved.consent !== consent || JSON.stringify(saved.fulfillment||{method:'pickup'})!==JSON.stringify(fulfillment)) throw new Error('Já existe uma tentativa para esta sacola. Atualize a página para conferir o resultado antes de alterar os dados do pedido.');
   return {key,...saved};
 }
 function receiptText(order) {
-  return `Saints’ Cookies — pedido ${order.number}\nEncomenda aceita. ${paymentStatus[order.payment_status]}.\n\n${order.items.map(i=>`${i.quantity}x ${i.product_name} — ${money(i.quantity*i.unit_cents/100)}`).join('\n')}\n\nTotal: ${money(order.amount_cents/100)}\nCliente: ${order.customer_name}\nTelefone: +${order.phone}\nEndereço cadastrado: ${order.address}\nPagamento preferido: ${payments[order.payment_preference]}\nRetirada com a Saints’; horário a combinar.`;
+  return `Saints’ Cookies — pedido ${order.number}\nEncomenda aceita. ${paymentStatus[order.payment_status]}.\n\n${order.items.map(i=>`${i.quantity}x ${i.product_name} — ${money(i.quantity*i.unit_cents/100)}`).join('\n')}\n\nProdutos: ${money((order.products_cents??order.amount_cents)/100)}${order.fulfillment==='delivery'?`\nFrete · ${order.region_name}: ${money(order.shipping_cents/100)} (valor de teste)`:''}\nTotal: ${money(order.amount_cents/100)}\nCliente: ${order.customer_name}\nTelefone: +${order.phone}\n${fulfillmentLabel(order)}${order.fulfillment==='delivery'?`\nEndereço de entrega confirmado: ${order.delivery_address}`:''}\nPagamento preferido: ${payments[order.payment_preference]}`;
 }
 function orderCard(order, admin = false) {
   const confirmPayment = admin && order.payment_status === 'pending';
@@ -42,7 +44,8 @@ function orderCard(order, admin = false) {
     <p>${escape(order.customer_name)} · ${money(order.amount_cents/100)}</p>
     <ul>${order.items.map(i=>`<li>${i.quantity}× ${escape(i.product_name)} · ${money(i.quantity*i.unit_cents/100)}</li>`).join('')}</ul>
     <p>${paymentStatus[order.payment_status]} · preferência: ${payments[order.payment_preference]}</p>
-    <p>Retirada com a Saints’ · horário a combinar</p>
+    <p>${escape(fulfillmentLabel(order))}</p>
+    ${order.fulfillment==='delivery'?`<p>Endereço de entrega confirmado: ${escape(order.delivery_address)}</p><p>Produtos: ${money(order.products_cents/100)} · Frete: ${money(order.shipping_cents/100)} · Total: ${money(order.amount_cents/100)}</p><p class="shipping-test-note">Frete fictício para testes.</p>`:''}
     ${admin ? `<p>Telefone: +${escape(order.phone)}<br>Endereço cadastrado: ${escape(order.address)}</p>` : ''}
     <p class="receipt-status">${delivery[order.whatsapp_status] || 'Envio em verificação'}</p>
     ${admin && order.whatsapp_error ? `<p class="field-help">Código de envio: ${escape(order.whatsapp_error)}</p>` : ''}
@@ -60,7 +63,7 @@ export function renderCommerce(account) {
   if(recovered) {
     const itemsKey = JSON.stringify(cart());
     if(itemsKey === pending.itemsKey || !cart().length) {
-      receipt = recovered;
+      receipt = recovered;clearAddressConfirmation();
       try { localStorage.removeItem('saints-bag'); } catch {}
     }
     try { sessionStorage.removeItem(intentStorageKey()); } catch {}
@@ -88,13 +91,21 @@ function renderCheckout() {
   const pending = savedIntent();
   const consentChecked = pending?.itemsKey === JSON.stringify(items) && pending.consent === true;
   $('#checkout-content').innerHTML = `<ul class="checkout-items">${items.map(i=>{const p=products.find(p=>p.id===i.id);return `<li><span>${i.quantity}× ${p.name}<small class="checkout-unit">${productUnit(p)}</small></span><strong>${money(p.price*i.quantity)}</strong></li>`;}).join('')}</ul>
-    <p class="checkout-total">Total dos produtos <strong>${money(total)}</strong></p>
-    <p>Retirada com a Saints’, com horário a combinar. Pagamento preferido: <strong>${hasPayment(current.profile) ? payments[current.profile.payment_preference] : 'escolha Pix ou Dinheiro nos seus dados acima'}</strong>.</p>
+    <div id="checkout-fulfillment"></div><div id="checkout-totals"></div>
+    <p>Pagamento preferido: <strong>${hasPayment(current.profile) ? payments[current.profile.payment_preference] : 'escolha Pix ou Dinheiro nos seus dados acima'}</strong>.</p>
     <p>Ao confirmar, sua encomenda será aceita imediatamente. Este ambiente é de testes; não há cobrança automática.</p>
     <form id="checkout-form"><label class="check-label"><input name="whatsapp_consent" type="checkbox" ${consentChecked ? 'checked' : ''}><span>Autorizo a Saints’ Cookies a enviar a confirmação e atualizações deste pedido ao meu WhatsApp.</span></label>
     <p class="field-help">Se o envio estiver indisponível, seu pedido continuará salvo e o comprovante ficará disponível aqui. Você também pode encomendar sem receber mensagens.</p>
     <button type="submit" class="button button-primary" ${hasPayment(current.profile) ? '' : 'disabled'}>Confirmar e aceitar encomenda</button></form>
     <p class="field-help">Confira a sacola antes de confirmar. <a href="./index.html#sabores">Alterar minha seleção</a></p>`;
+  updateFulfillment(total);
+}
+function updateFulfillment(total) {
+  mountFulfillment($('#checkout-fulfillment'),{account:current,onChange:()=>updateFulfillment(total),onEditAddress:()=>{
+    $('#profile-details').open=true;$('#profile-details').scrollIntoView({behavior:'smooth',block:'start'});$('#profile-form').elements.address.focus();
+  }});
+  $('#checkout-totals').innerHTML=shippingSummary(Math.round(total*100));
+  $('#checkout-form [type="submit"]').disabled=!hasPayment(current.profile)||!fulfillmentReady(current);
 }
 export function renderAdminCheckouts(data) {
   $('#whatsapp-config-status').textContent = data.whatsapp_enabled ? 'Integração do WhatsApp ativada. Consulte abaixo o resultado de cada envio.' : 'O envio automático ainda depende das credenciais e do modelo aprovado no WhatsApp Business. Os pedidos continuam sendo aceitos e salvos.';
@@ -102,6 +113,12 @@ export function renderAdminCheckouts(data) {
 }
 export function setupCommerce(actions) {
   ({reload,feedback} = actions);
+  window.addEventListener('storage',event=>{
+    if(event.key!=='saints-fulfillment'||!current||receipt) return;
+    const consent=$('#checkout-form [name="whatsapp_consent"]')?.checked;
+    renderCheckout();
+    const checkbox=$('#checkout-form [name="whatsapp_consent"]');if(checkbox&&consent) checkbox.checked=true;
+  });
   document.addEventListener('submit',async event=>{
     const form = event.target;
     if (!form.matches('#profile-form,#checkout-form')) return;
@@ -112,15 +129,17 @@ export function setupCommerce(actions) {
     try {
       if (form.id === 'profile-form') {
         await api('/profile',Object.fromEntries(new FormData(form)));
-        await reload(); $('#profile-details').open = false; feedback('Seus dados foram salvos.');
+        clearAddressConfirmation();await reload(); $('#profile-details').open = false; feedback('Seus dados foram salvos.');
       } else {
         const items = cart();
         if (!items.length) throw new Error('Sua sacola está vazia. Escolha seus sabores na loja.');
         const consent = form.elements.whatsapp_consent.checked;
-        const pending = intent(items,consent);
+        if(!fulfillmentReady(current)) throw new Error('Selecione a região e confirme o endereço de entrega.');
+        const fulfillment=fulfillmentRequest(current);
+        const pending = intent(items,consent,fulfillment);
         button.textContent = 'Registrando sua encomenda…';
-        const result = await api('/checkout',{items,whatsapp_consent:consent,request_key:pending.request_key});
-        receipt = result.order;
+        const result = await api('/checkout',{items,whatsapp_consent:consent,request_key:pending.request_key,fulfillment});
+        receipt = result.order;clearAddressConfirmation();
         // Preserve another tab's cart if it was changed while checkout was running.
         if (JSON.stringify(cart()) === JSON.stringify(items)) { try { localStorage.removeItem('saints-bag'); } catch {} }
         try { sessionStorage.removeItem(pending.key); } catch {}
@@ -128,7 +147,12 @@ export function setupCommerce(actions) {
         await reload(); feedback('Encomenda aceita! Seu comprovante está disponível abaixo.');
         $('#checkout-section').scrollIntoView({behavior:'smooth',block:'start'});
       }
-    } catch(error) { feedback(error.message,true); }
+    } catch(error) {
+      if(form.id==='checkout-form' && [400,401,403,429].includes(error.status)) {
+        try {sessionStorage.removeItem(intentStorageKey());await reload();} catch {}
+      }
+      feedback(error.message,true);
+    }
     finally { submitting = false; if(button.isConnected) { button.disabled = false; if(form.id==='checkout-form') button.textContent='Confirmar e aceitar encomenda'; } }
   });
   document.addEventListener('click',async event=>{

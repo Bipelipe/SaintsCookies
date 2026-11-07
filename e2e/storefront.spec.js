@@ -38,6 +38,33 @@ test('selection can be copied for a real conversation', async ({ page, context }
   await expect(page.getByRole('link', { name: 'Enviar pelo Instagram' })).toHaveAttribute('href', 'https://www.instagram.com/saintscookies/');
 });
 
+test('bag has pickup/delivery tabs and only delivery adds the RA test fee to the products',async({page})=>{
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/');
+  await page.getByRole('button',{name:'Adicionar Brown butter à sacola',exact:true}).click();
+  await page.getByRole('button',{name:'Abrir sacola'}).click();
+  await page.getByRole('tab',{name:'Retirada ou entrega',exact:true}).click();
+  await expect(page.getByLabel('Retirar na loja',{exact:false})).toBeChecked();
+  await expect(page.locator('.shipping-line')).toHaveCount(0);
+  await expect(page.getByText('Seu endereço ainda é este?',{exact:true})).toHaveCount(0);
+  await page.getByLabel('Receber em casa',{exact:false}).check();
+  await expect(page.getByLabel('RA do endereço de entrega')).toBeVisible();
+  await expect(page.getByLabel('RA do endereço de entrega').locator('option')).toHaveCount(36);
+  await page.getByLabel('RA do endereço de entrega').selectOption('plano-piloto');
+  await expect(page.locator('.shipping-line')).toContainText('R$ 10,00');
+  await expect(page.locator('.grand-total')).toContainText('R$ 22,00');
+  await expect(page.locator('#bag-fulfillment')).toContainText('Entre na sua conta');
+  await page.getByRole('tab',{name:'Produtos',exact:true}).click();
+  await expect(page.locator('.bag-item')).toContainText('Brown butter');
+  await expect(page.locator('.shipping-line')).toContainText('Plano Piloto');
+  await page.getByRole('tab',{name:'Retirada ou entrega',exact:true}).click();
+  await page.screenshot({path:'/tmp/saints-bag-delivery-mobile.png',fullPage:true});
+  await page.getByLabel('Retirar na loja',{exact:false}).check();
+  await expect(page.locator('.shipping-line')).toHaveCount(0);
+  await expect(page.locator('.grand-total')).toHaveCount(0);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
 test('real product categories show the right weights and biscuit quantities count pots',async({page,context})=>{
   await context.grantPermissions(['clipboard-read','clipboard-write']);
   await page.goto('/');

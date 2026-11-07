@@ -6,7 +6,7 @@ O cliente escolhe os cookies, entra na conta, confere os dados e clica em **Conf
 
 **Aceitar não é cobrar.** O pagamento fica pendente. A equipe confere o recebimento no painel e confirma o pagamento. Não há sistema de pontos ou brindes. O cadastro pede nome, e-mail, senha, telefone brasileiro com DDD, endereço completo e preferência entre Pix e dinheiro. Nenhum dado de cartão é coletado. Contas antigas mantêm o acesso; basta completar os dados em “Meus dados para encomendas”. O login continua usando e-mail e senha.
 
-Nesta implementação de teste, o atendimento é por **retirada**, com horário a combinar. Não foi inventada uma taxa de entrega ou um prazo. Antes de vender de verdade, precisamos definir catálogo e preços oficiais, disponibilidade, local/horários de retirada e, se desejado, área, preço e prazo da entrega.
+Nesta implementação de teste, o cliente escolhe **retirada na loja** ou **entrega em casa**. A entrega usa tarifas fictícias por RA do DF e exige confirmação do endereço cadastrado; o total inclui produtos e frete. Consulte [ENTREGAS.md](ENTREGAS.md). Os valores reais, disponibilidade e horários ainda devem ser definidos pela loja.
 
 ## Tabela de informações e tarefas externas
 
@@ -38,12 +38,12 @@ Nome sugerido: `saints_pedido_aceito`. Idioma: `pt_BR`. Corpo, com oito parâmet
 ```text
 Olá, {{1}}! Sua encomenda {{2}} foi aceita pela Saints’ Cookies.
 Itens: {{3}}
-Total dos produtos: {{4}}
+Total do pedido (produtos + frete, quando houver): {{4}}
 Pagamento preferido: {{5}}
 Atendimento: {{6}}
 Endereço cadastrado: {{7}}
 Situação: {{8}}
-Combine o horário de retirada com a nossa equipe. O pagamento é conferido pela nossa equipe.
+Combine o horário de retirada ou entrega com a nossa equipe. O pagamento é conferido pela nossa equipe.
 ```
 
 Exemplos fictícios para o pedido de aprovação:
@@ -55,11 +55,11 @@ Exemplos fictícios para o pedido de aprovação:
 | 3 | Quantidades e sabores, em uma linha | 2x Brown butter (cookie de aprox. 90 g); 1x Amanteigado (pote de 100 g) |
 | 4 | Total em reais | R$ 36,00 |
 | 5 | Pagamento preferido | Pix |
-| 6 | Forma de atendimento | Retirada com a Saints’ |
+| 6 | Forma de atendimento | Retirar na loja ou receber em casa, com RA e frete de teste |
 | 7 | Endereço cadastrado | Rua de Exemplo, 123, Centro, São Paulo, SP, 01000-000 |
 | 8 | Situação | Aceito; pagamento pendente |
 
-O modelo é uma confirmação da encomenda, sem alegação de pagamento recebido. Não é nota fiscal. O endereço é apenas o cadastrado pelo cliente; o atendimento desta versão é retirada. O cliente escolhe, com uma caixa inicialmente desmarcada, se autoriza as mensagens sobre aquele pedido. Não há disparo de marketing e não se presume autorização a partir do cadastro.
+O modelo é uma confirmação da encomenda, sem alegação de pagamento recebido. Não é nota fiscal. Na entrega, o endereço é o confirmado pelo cliente no pedido; na retirada, permanece apenas como dado cadastral. A integração continua desativada. Antes de ativá-la, o modelo aprovado precisa mencionar o total e o atendimento de forma compatível com entrega e retirada. O cliente escolhe, com uma caixa inicialmente desmarcada, se autoriza as mensagens sobre aquele pedido. Não há disparo de marketing e não se presume autorização a partir do cadastro.
 
 ## O que testar após configurar
 

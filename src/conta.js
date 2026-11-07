@@ -6,8 +6,10 @@ import '@fontsource/playfair-display/latin-400-italic.css';
 import './style.css';
 import './conta.css';
 import './admin.css';
+import './fulfillment.css';
 import { api } from './api.js';
 import { setupPhoneFields } from './phone.js';
+import { clearAddressConfirmation } from './fulfillment.js';
 import { passwordPattern, passwordHelp } from './password-policy.js';
 import { renderCommerce, renderAdminCheckouts, setupCommerce } from './account-commerce.js';
 
@@ -20,6 +22,7 @@ function feedback(message, error = false) {
   $('#feedback').setAttribute('role', error ? 'alert' : 'status');
 }
 function showAuth() {
+  clearAddressConfirmation();
   account = undefined;
   $('#auth-panel').hidden = false;
   $('#account-panel').hidden = $('#admin-panel').hidden = $('#sign-out').hidden = $('#admin-navigation').hidden = true;
@@ -34,6 +37,10 @@ function renderAccount() {
   $('#customer-role').className = `account-role role-badge ${account.user.role}`;
   $('#admin-navigation').hidden=account.user.role!=='admin';
   renderCommerce(account);
+  if(new URLSearchParams(location.search).has('editar-endereco')) {
+    $('#profile-details').open=true;$('#profile-details').scrollIntoView({block:'start'});
+    $('#profile-form').elements.address.focus();
+  }
 }
 async function loadAdmin() {
   if (!['admin','owner'].includes(account?.user.role)) { $('#admin-panel').hidden = true; return; }

@@ -1,0 +1,27 @@
+.bag-tabs { display:flex; gap:8px; margin:16px 0 22px; border-bottom:1px solid var(--line); padding-bottom:10px; }
+.bag-tabs[hidden] { display:none; }
+.bag-tabs button { flex:1; border:1px solid var(--line); background:transparent; border-radius:24px; padding:12px 8px; font:inherit; font-size:14px; }
+.bag-tabs [aria-selected="true"] { background:#807148; border-color:#807148; color:white; }
+.fulfillment-picker { margin:18px 0 24px; }
+.fulfillment-picker h3 { font-family:var(--serif); font-size:25px; font-weight:400; margin:0 0 16px; }
+.fulfillment-methods { display:grid; gap:10px; border:0; padding:0; min-width:0; margin:0; }
+.fulfillment-methods label,.account-page .fulfillment-methods label { display:flex; flex-direction:row; align-items:flex-start; gap:12px; border:1px solid #d8cebc; border-radius:7px; padding:15px; font-size:16px; cursor:pointer; margin:0; line-height:1.5; }
+.fulfillment-methods label:has(input:checked) { border-color:#a8803c; background:#f5efe2; }
+.fulfillment-methods small { display:block; font-size:13px; color:#796d5b; margin-top:5px; }
+.fulfillment-picker input[type="radio"],.fulfillment-picker input[type="checkbox"] { width:19px; height:19px; min-height:19px; flex:none; margin:3px 0 0; padding:0; accent-color:#807148; }
+.delivery-fields { margin-top:20px; }
+.delivery-fields>label { display:block; font-size:15px; margin:12px 0 8px; }
+.delivery-fields select { display:block; width:100%; min-width:0; border:1px solid #d8cebc; border-radius:4px; padding:13px 8px; background:#fffefa; color:var(--ink); font:inherit; font-size:15px; min-height:47px; }
+.delivery-fields p { font-size:14px; line-height:1.8; margin:12px 0; }
+.address-confirmation { border-top:1px solid var(--line); margin-top:18px; padding-top:8px; }
+.delivery-address { overflow-wrap:anywhere; background:#f5efe2; padding:13px 15px; border-radius:5px; }
+.address-check,.account-page .address-check { display:flex; flex-direction:row; align-items:flex-start; gap:10px; font-size:15px; line-height:1.7; cursor:pointer; margin:14px 0; }
+.delivery-fields .text-link { font-size:14px; line-height:1.7; padding:8px 0; background:none; text-align:left; }
+.shipping-line,.grand-total { display:flex; justify-content:space-between; gap:16px; padding:12px 0; font-size:16px; line-height:1.7; }
+.shipping-line span { min-width:0; overflow-wrap:anywhere; }
+.shipping-line strong,.grand-total strong { flex:none; }
+.grand-total { border-top:1px solid var(--line); font-size:20px; }
+.shipping-test-note,.checkout-card .shipping-test-note,.web-order .shipping-test-note { font-size:13px; line-height:1.7; color:#806b43; margin:6px 0 14px; }
+.visually-hidden { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
+.order-totals .subtotal { margin-top:15px; }
+@media(max-width:480px) { .fulfillment-picker h3 {font-size:23px;} .bag-tabs button {font-size:13px;} .fulfillment-methods label {padding:13px;} }

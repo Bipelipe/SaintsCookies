@@ -54,3 +54,9 @@ O catálogo usa os sabores e preços informados pela loja: Brown butter, Red vel
 Defina disponibilidade, local e horários de retirada e as condições de entrega/pagamento antes do uso comercial. Esta versão aceita encomendas de teste sem cobrança automática. A área de conta ainda não oferece recuperação de senha ou verificação de e-mail.
 
 O telefone no cadastro e no perfil mostra o código do Brasil `+55` fixo e formata o DDD e o número automaticamente, como `+55 (11) 99999-9999`. Novos cadastros exigem senha de 6 a 128 caracteres, com pelo menos uma letra maiúscula, uma minúscula e um número. A regra de criação não altera o acesso das contas existentes.
+
+## Retirada e entrega de teste
+
+A sacola tem as abas **Produtos** e **Retirada ou entrega**. Retirar na loja não cobra frete nem exige confirmação de endereço. Receber em casa exige RA do DF e confirmação do endereço salvo; o cliente pode atualizar o cadastro antes de confirmar. O resumo, o comprovante e o painel discriminam produtos, frete e total.
+
+As 35 tarifas são **fictícias**, entre R$ 10 e R$ 25, e ficam centralizadas em `src/shipping.js` em centavos. Consulte [o guia de entregas](docs/ENTREGAS.md) para substituir pelos valores reais e entender a atualização aditiva do D1.

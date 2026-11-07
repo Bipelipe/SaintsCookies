@@ -1,4 +1,6 @@
 import { payments } from './profile.js';
+import { fulfillmentLabel } from '../src/shipping.js';
+import { ensureShippingSchema } from './shipping-schema.js';
 
 export function whatsappConfigured(env) {
   return env.WHATSAPP_ENABLED === 'true' && /^\d+$/.test(env.WHATSAPP_PHONE_NUMBER_ID || '')
@@ -11,7 +13,7 @@ export function templatePayload(env, order, items) {
   const values = [order.customer_name, order.number,
     items.map(i => `${i.quantity}x ${i.product_name}`).join('; '),
     (order.amount_cents / 100).toLocaleString('pt-BR', { style:'currency',currency:'BRL' }),
-    payments[order.payment_preference], 'Retirada com a Saints’', order.address, `Aceito; ${{pending:'pagamento pendente',confirmed:'pagamento conferido pela equipe',not_approved:'pagamento não confirmado'}[order.payment_status]}`];
+    payments[order.payment_preference], order.fulfillment==='delivery'?`${fulfillmentLabel(order)}; frete de teste ${(order.shipping_cents/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}`:'Retirada com a Saints’', order.delivery_address||order.address, `Aceito; ${{pending:'pagamento pendente',confirmed:'pagamento conferido pela equipe',not_approved:'pagamento não confirmado'}[order.payment_status]}`];
   return { messaging_product:'whatsapp', to:order.phone, type:'template',
     template:{ name:env.WHATSAPP_TEMPLATE_NAME, language:{ code:env.WHATSAPP_TEMPLATE_LANGUAGE },
       components:[{ type:'body',parameters:values.map(value => ({ type:'text',text:value.replace(/[\r\n\t]+/g,' ').slice(0,900) })) }] } };
@@ -19,7 +21,9 @@ export function templatePayload(env, order, items) {
 // A claimed outbox row prevents concurrent clicks from sending twice. Unknown
 // delivery outcomes are never retried automatically: Meta has no idempotency key.
 export async function dispatchReceipt(db, env, checkoutId, transport = fetch) {
-  const order = await db.prepare('SELECT * FROM checkout_orders WHERE id=?').bind(checkoutId).first();
+  await ensureShippingSchema(db);
+  const order = await db.prepare("SELECT c.*,f.method AS fulfillment_method,f.region_name,f.shipping_cents,f.delivery_address FROM checkout_orders c LEFT JOIN checkout_fulfillment f ON f.checkout_id=c.id WHERE c.id=?").bind(checkoutId).first();
+  if(order) order.fulfillment=order.fulfillment_method||'pickup';
   if (!order || !order.whatsapp_consent) return;
   if (!whatsappConfigured(env)) {
     await db.prepare("UPDATE whatsapp_outbox SET status='not_configured',updated_at=unixepoch() WHERE checkout_id=? AND status IN ('pending','failed','not_configured')").bind(checkoutId).run();
