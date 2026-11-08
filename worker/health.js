@@ -17,8 +17,9 @@ export async function databaseHealth(env) {
     // Validate every runtime table without reading any customer records.
     await db.prepare(`SELECT u.id, s.token_hash, o.status, l.attempts, c.phone, w.payment_status, i.quantity, n.status
       FROM users u, sessions s, orders o, rate_limits l, customer_profiles c, checkout_orders w, checkout_items i, whatsapp_outbox n LIMIT 0`).first();
+    const regions=await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='customer_regions'").first();
     const shipping=await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='checkout_fulfillment'").first();
-    return { status: 200, data: { status: 'ok', environment: 'test', shipping_ready:Boolean(shipping), ...diagnostic } };
+    return { status: 200, data: { status: 'ok', environment: 'test', shipping_ready:Boolean(shipping), profile_regions_ready:Boolean(regions), ...diagnostic } };
   } catch (error) {
     if (String(error).includes('no such table')) return {
       status: 503,

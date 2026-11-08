@@ -12,7 +12,7 @@ test('delivery confirms the saved address, supports updates, saves server shippi
   sql('DROP TABLE checkout_fulfillment; DELETE FROM rate_limits');
   const config=await (await page.request.get('/api/checkout/config')).json();
   expect(config.ready).toBe(true);expect(config.shipping_regions).toHaveLength(35);
-  const person={name:'Cliente de entrega',email:`shipping-${randomUUID()}@example.test`,password:`Teste-${randomUUID()}`,phone:'61987654321',address:'QE 12, conjunto A, casa 10, Guará, Brasília, DF',payment_preference:'pix'};
+  const person={name:'Cliente de entrega',email:`shipping-${randomUUID()}@example.test`,password:`Teste-${randomUUID()}`,phone:'61987654321',address:'QE 12, conjunto A, casa 10, Guará, Brasília, DF',payment_preference:'pix',region_id:'guara'};
   expect((await page.request.post('/api/auth/register',{headers:{Origin:origin},data:person})).status()).toBe(200);
   await page.setViewportSize({width:390,height:844});
   await page.goto('/');
@@ -23,7 +23,8 @@ test('delivery confirms the saved address, supports updates, saves server shippi
   await expect(page.getByText('Seu endereço ainda é este?',{exact:true})).toBeVisible();
   await expect(page.locator('.delivery-address')).toHaveText(person.address);
   await expect(page.getByLabel('Sim, este é meu endereço de entrega.',{exact:true})).not.toBeChecked();
-  await page.getByLabel('RA do endereço de entrega').selectOption('guara');
+  await expect(page.locator('.saved-region')).toContainText('Guará');
+  await expect(page.getByLabel('RA do endereço de entrega')).toHaveCount(0);
   await page.getByRole('link',{name:'Não, quero atualizar o endereço',exact:true}).click();
   const newAddress='QE 14, conjunto B, casa 20, Guará, Brasília, DF';
   await page.getByLabel('Endereço cadastrado',{exact:true}).fill(newAddress);

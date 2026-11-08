@@ -20,7 +20,7 @@ test('sessions use secure HttpOnly cookies and irreversible token digests', asyn
 });
 test('registration enforces password composition and six-character minimum without changing legacy login', async () => {
   const db = testDatabase();
-  const person = {name:'Cliente de teste',email:'new@example.test',phone:'(11) 99999-9999',address:'Rua dos Testes, 123, São Paulo, SP',payment_preference:'pix'};
+  const person = {name:'Cliente de teste',email:'new@example.test',phone:'(11) 99999-9999',address:'Rua dos Testes, 123, São Paulo, SP',payment_preference:'pix',region_id:'plano-piloto'};
   const post = (path, data) => worker.fetch(new Request(`https://test.example/api/auth/${path}`, {
     method:'POST',headers:{'Content-Type':'application/json',Origin:'https://test.example'},body:JSON.stringify(data),
   }), {DB:db});

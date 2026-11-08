@@ -1,6 +1,8 @@
 import { rolesReady,roleNames } from './roles.js';
 import { ensureShippingSchema } from './shipping-schema.js';
 import { getCheckout } from './checkout.js';
+import { profileFor } from './profile.js';
+import { ensureRegionSchema } from './region-schema.js';
 
 export class AdminError extends Error {
   constructor(status,message) { super(message);this.status=status; }
@@ -21,7 +23,7 @@ function pagination(params) {
 async function userDetail(db,id) {
   const user=await db.prepare(`${userSelect} WHERE u.id=?`).bind(id).first();
   if(!user) fail(404,'Conta não encontrada.');
-  const profile=await db.prepare('SELECT phone,address,payment_preference,updated_at FROM customer_profiles WHERE user_id=?').bind(id).first();
+  const profile=await profileFor(db,id);
   return {user,profile};
 }
 export async function changeRole(db,actor,userId,data) {
@@ -57,12 +59,13 @@ export async function administration(request,db,user,readBody) {
   if(user.role!=='admin') fail(403,'A administração de contas é exclusiva do admin.');
   if(!await rolesReady(db)) fail(503,'O painel está preparado, mas falta aplicar a atualização 0003 do banco. Consulte o guia de administração.');
   await ensureShippingSchema(db);
+  await ensureRegionSchema(db);
   if(path==='/api/admin/dashboard'&&method==='GET') {
     const counts=(await db.prepare(`SELECT ${role} AS role,COUNT(*) AS total FROM users u LEFT JOIN account_roles ar ON ar.user_id=u.id GROUP BY ${role}`).all()).results;
     const orders=await db.prepare("SELECT COUNT(*) AS total,COALESCE(SUM(payment_status='pending'),0) AS pending,COALESCE(SUM(CASE WHEN payment_status='confirmed' THEN amount_cents ELSE 0 END),0) AS paid_cents FROM checkout_orders").first();
     const tables=[];
     // Curated database view. No arbitrary SQL, password hashes or session tokens.
-    for(const [name,label] of [['users','Contas'],['customer_profiles','Dados cadastrais'],['checkout_orders','Encomendas'],['checkout_items','Itens dos pedidos'],['checkout_fulfillment','Retiradas e entregas'],['account_roles','Cargos atribuídos'],['role_changes','Alterações de cargos']]) {
+    for(const [name,label] of [['users','Contas'],['customer_profiles','Dados cadastrais'],['customer_regions','Regiões cadastradas'],['checkout_orders','Encomendas'],['checkout_items','Itens dos pedidos'],['checkout_fulfillment','Retiradas e entregas'],['account_roles','Cargos atribuídos'],['role_changes','Alterações de cargos']]) {
       const result=await db.prepare(`SELECT COUNT(*) AS total FROM ${name}`).first();
       tables.push({name,label,total:result.total});
     }

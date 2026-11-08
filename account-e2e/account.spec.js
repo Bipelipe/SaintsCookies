@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 
 const origin='http://127.0.0.1:8788';
-const identity=label=>({name:`Teste ${label}`,email:`${label}-${randomUUID()}@example.test`,password:`Teste-${randomUUID()}`,phone:'11999999999',address:'Rua dos Testes, 123, Centro, São Paulo, SP',payment_preference:'pix'});
+const identity=label=>({name:`Teste ${label}`,email:`${label}-${randomUUID()}@example.test`,password:`Teste-${randomUUID()}`,phone:'11999999999',address:'Rua dos Testes, 123, Centro, São Paulo, SP',payment_preference:'pix',region_id:'plano-piloto'});
 const account=async api=>(await api.get('/api/account')).json();
 function sql(command) {
   const result=execFileSync(process.execPath,['scripts/wrangler.mjs','d1','execute','DB','--local','--config','wrangler.dev.json','--persist-to','.wrangler/test-state','--command',command,'--json'],{encoding:'utf8'});
@@ -22,6 +22,7 @@ async function register(page,person) {
   await expect(page.getByLabel('Pagamento preferido',{exact:true}).locator('option')).toHaveText(['Selecione uma opção','Pix','Dinheiro']);
   for(const [label,value] of [['Seu nome',person.name],['Telefone do WhatsApp',person.phone],['Endereço completo',person.address],['E-mail',person.email],['Senha',person.password]]) await page.getByLabel(label,{exact:true}).fill(value);
   await page.getByLabel('Pagamento preferido',{exact:true}).selectOption('pix');
+  await page.getByLabel('Região administrativa (RA)',{exact:true}).selectOption(person.region_id);
   await page.locator('#auth-submit').click();
   await expect(page.locator('#account-panel')).toBeVisible();
 }
@@ -35,6 +36,7 @@ test('signup, profile editing, order checkout and logout remain available withou
   await page.locator('#profile-details summary').click();
   await expect(page.getByLabel('Forma de pagamento preferida',{exact:true}).locator('option')).toHaveText(['Selecione uma opção','Pix','Dinheiro']);
   await page.getByLabel('Forma de pagamento preferida',{exact:true}).selectOption('cash');
+  await page.getByLabel('RA cadastrada',{exact:true}).selectOption('gama');
   await page.getByLabel('Nome completo',{exact:true}).fill('Nome atualizado');
   await page.getByLabel('Endereço cadastrado',{exact:true}).fill('Rua Atualizada, 456, São Paulo, SP');
   await page.getByRole('button',{name:'Salvar meus dados',exact:true}).click();
@@ -43,6 +45,8 @@ test('signup, profile editing, order checkout and logout remain available withou
   await expect(page.locator('#customer-name')).toHaveText('Nome atualizado');
   expect((await account(page.request)).profile.address).toBe('Rua Atualizada, 456, São Paulo, SP');
   expect((await account(page.request)).profile.payment_preference).toBe('cash');
+  expect((await account(page.request)).profile.region_id).toBe('gama');
+  await expect(page.getByLabel('RA cadastrada',{exact:true})).toHaveValue('gama');
   await page.getByRole('button',{name:'Sair da conta',exact:true}).click();
   await expect(page.locator('#auth-panel')).toBeVisible();
   expect((await page.request.get('/api/account')).status()).toBe(401);
@@ -58,6 +62,17 @@ test('Brazil phone fields format typing, paste, edits and saved profiles; signup
   await page.setViewportSize({width:390,height:900});
   await page.goto('/conta.html');
   await page.getByRole('button',{name:'Criar minha conta',exact:true}).click();
+  const region=page.getByLabel('Região administrativa (RA)',{exact:true});
+  await expect(region.locator('option')).toHaveCount(36);
+  await expect(region).not.toContainText('R$');
+  await page.setViewportSize({width:1440,height:900});
+  const addressBox=await page.getByLabel('Endereço completo',{exact:true}).boundingBox();
+  const regionBox=await region.boundingBox();
+  expect(regionBox.x).toBeGreaterThan(addressBox.x+addressBox.width);
+  expect(Math.abs(regionBox.y-addressBox.y)).toBeLessThan(4);
+  await page.setViewportSize({width:390,height:900});
+  expect((await region.boundingBox()).y).toBeGreaterThan((await page.getByLabel('Endereço completo',{exact:true}).boundingBox()).y);
+  expect(await region.evaluate(field=>field.checkValidity())).toBe(false);
   const phone=page.getByLabel('Telefone do WhatsApp',{exact:true});
   await expect(page.locator('#registration-fields .phone-country')).toHaveText('+55');
   await expect(phone).toHaveAttribute('placeholder','(11) 99999-9999');

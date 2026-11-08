@@ -1,7 +1,7 @@
 import { products, money, productUnit } from './products.js';
 import { api } from './api.js';
 import { formatBrazilPhone } from './phone.js';
-import { mountFulfillment, fulfillmentRequest, fulfillmentReady, shippingSummary, clearAddressConfirmation } from './fulfillment.js';
+import { mountFulfillment, fulfillmentRequest, fulfillmentReady, shippingSummary, clearAddressConfirmation, fulfillmentChoice } from './fulfillment.js';
 import { fulfillmentLabel } from './shipping.js';
 
 const $ = selector => document.querySelector(selector);
@@ -70,7 +70,7 @@ export function renderCommerce(account) {
   }
   const form = $('#profile-form');
   form.elements.name.value = account.user.name;
-  for (const key of ['phone','address','payment_preference']) form.elements[key].value = account.profile?.[key] || '';
+  for (const key of ['phone','address','payment_preference','region_id']) form.elements[key].value = account.profile?.[key] || '';
   form.elements.phone.value = formatBrazilPhone(account.profile?.phone);
   $('#profile-help').textContent = account.profile ? (hasPayment(account.profile) ? 'Confira seus dados antes de fechar uma encomenda. Alterações valem para os próximos pedidos.' : 'Escolha Pix ou Dinheiro e salve seus dados antes de fechar uma nova encomenda.') : 'Complete seus dados para conseguir fechar sua encomenda. Seu login continua o mesmo.';
   if (!hasPayment(account.profile)) $('#profile-details').open = true;
@@ -104,7 +104,7 @@ function updateFulfillment(total) {
   mountFulfillment($('#checkout-fulfillment'),{account:current,onChange:()=>updateFulfillment(total),onEditAddress:()=>{
     $('#profile-details').open=true;$('#profile-details').scrollIntoView({behavior:'smooth',block:'start'});$('#profile-form').elements.address.focus();
   }});
-  $('#checkout-totals').innerHTML=shippingSummary(Math.round(total*100));
+  $('#checkout-totals').innerHTML=shippingSummary(Math.round(total*100),fulfillmentChoice(current));
   $('#checkout-form [type="submit"]').disabled=!hasPayment(current.profile)||!fulfillmentReady(current);
 }
 export function renderAdminCheckouts(data) {

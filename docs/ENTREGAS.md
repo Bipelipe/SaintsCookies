@@ -6,14 +6,15 @@ A implementação está apenas na branch dev. Os valores abaixo são fictícios 
 
 - Na sacola, a aba Produtos mantém os itens e a aba Retirada ou entrega oferece as duas modalidades.
 - Retirar na loja tem frete zero e não pergunta se o endereço ainda é o mesmo. Local e horário ficam a combinar até a loja informar os dados oficiais.
-- Receber em casa exige a RA do endereço e a resposta à pergunta “Seu endereço ainda é este?”. Quem ainda não entrou é direcionado à conta para confirmar o endereço cadastrado.
+- O cadastro e a edição de perfil exibem a RA junto ao endereço, com as 35 opções contendo somente nomes, sem preços de frete.
+- Receber em casa usa automaticamente a RA salva no cadastro e exige a resposta à pergunta “Seu endereço ainda é este?”. Quem ainda não entrou é direcionado à conta para confirmar o endereço cadastrado.
 - “Não, quero atualizar o endereço” abre a edição do cadastro. Após salvar, é necessário confirmar o endereço novo. O servidor compara o endereço confirmado com o cadastro atual antes de aceitar um pedido.
 - Produtos, frete por RA e total aparecem no fim da sacola e no fechamento. O histórico, comprovante e painel guardam o frete e o endereço daquele pedido. Pedidos antigos continuam com seus dados originais.
-- A confirmação de endereço é temporária, vinculada ao usuário e ao endereço da sessão; ela é limpa ao sair, atualizar o cadastro ou concluir o pedido. O endereço não é guardado no localStorage.
+- A confirmação de endereço é temporária, vinculada ao usuário e ao endereço da sessão; ela é limpa ao sair, atualizar o cadastro ou concluir o pedido. O endereço não é guardado no localStorage. A confirmação também se vincula à RA cadastrada; se ela mudar, o cliente confirma novamente.
 
 ## Substituir os fretes de teste
 
-Edite a tabela shippingRegions de src/shipping.js. O campo fee_cents é inteiro em centavos: 1500 significa R$ 15,00. A tabela é compartilhada pelo frontend e pelo servidor. Depois de definir os valores oficiais, atualize também os avisos de teste e esta documentação. Não há cálculo por GPS, CEP ou distância: o cliente escolhe manualmente a RA do endereço.
+Edite a tabela shippingRegions de src/shipping.js. O campo fee_cents é inteiro em centavos: 1500 significa R$ 15,00. A tabela é compartilhada pelo frontend e pelo servidor. Depois de definir os valores oficiais, atualize também os avisos de teste e esta documentação. Não há cálculo por GPS, CEP ou distância: o cliente escolhe manualmente a RA no cadastro. Perfis antigos sem RA ainda podem selecioná-la na entrega ou completar o cadastro; visitantes não autenticados podem consultar o frete por região na sacola.
 
 | Região administrativa | Frete fictício |
 |---|---:|
@@ -66,3 +67,9 @@ Para instalações administradas por Wrangler, migrations/0004_checkout_fulfillm
 O servidor escolhe o frete pela RA, ignora preços enviados pelo cliente e exige que o frete esperado ainda corresponda à tabela. Produtos, frete, pagamento e comprovante são gravados no mesmo lote atômico. Retentativas preservam a cotação e o endereço originais e não criam outro pedido.
 
 A integração Meta continua desativada; nenhum envio real é necessário para testar retirada ou entrega.
+
+## RA salva no cadastro
+
+A atualização 0005 acrescenta a tabela customer_regions, vinculada à conta, sem alterar senhas, endereços ou pedidos antigos. A aplicação faz a criação fixa e idempotente automaticamente ao ler/gravar perfis ou consultar /api/checkout/config. Também estão disponíveis migrations/0005_customer_regions.sql e docs/D1-ATUALIZACAO-0005.sql para ambientes administrados por migrations/Console.
+
+Novos cadastros e edições de perfil exigem uma RA válida do DF. Perfis anteriores continuam acessíveis com RA não informada até a escolha pelo cliente. Para uma entrega nova, quando existe uma RA no perfil, o servidor exige a mesma região no pedido e usa a tarifa dessa RA; a alteração posterior do cadastro não muda as encomendas já salvas.

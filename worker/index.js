@@ -1,4 +1,5 @@
 import { ensureShippingSchema } from './shipping-schema.js';
+import { ensureRegionSchema } from './region-schema.js';
 import { shippingRegions } from '../src/shipping.js';
 import { hashPassword, verifyPassword, randomToken, digest, sessionToken, sessionCookie } from './security.js';
 import { validNewPassword, passwordHelp } from '../src/password-policy.js';
@@ -75,7 +76,7 @@ async function api(request, env) {
   if (method === 'POST' && request.headers.get('Origin') !== url.origin) fail(403, 'Origem da solicitação não permitida.');
   if (path === '/api/checkout/config' && method === 'GET') {
     const ready=await checkoutReady(db);
-    if(ready) await ensureShippingSchema(db);
+    if(ready) {await ensureShippingSchema(db);await ensureRegionSchema(db);}
     return json({ready,whatsapp_enabled:whatsappConfigured(env),shipping_test:true,shipping_regions:shippingRegions});
   }
   if (path === '/api/auth/register' && method === 'POST') {
@@ -88,9 +89,11 @@ async function api(request, env) {
     let profile; try { profile = validateProfile(data); } catch (error) { fail(400,error.message); }
     const user = { id: crypto.randomUUID(), name, email, role: 'customer' };
     const password = await hashPassword(data.password);
+    await ensureRegionSchema(db);
     try { await db.batch([
       db.prepare('INSERT INTO users (id,name,email,password_hash) VALUES (?,?,?,?)').bind(user.id,name,email,password),
       db.prepare('INSERT INTO customer_profiles(user_id,phone,address,payment_preference) VALUES (?,?,?,?)').bind(user.id,profile.phone,profile.address,profile.payment_preference),
+      db.prepare('INSERT INTO customer_regions(user_id,region_id) VALUES (?,?)').bind(user.id,profile.region_id),
     ]); }
     catch (error) { if (String(error).includes('UNIQUE')) fail(409, 'Já existe uma conta com esse e-mail. Entre na sua conta.'); throw error; }
     return createSession(request, db, user);
@@ -118,11 +121,14 @@ async function api(request, env) {
     let profile; try { profile = validateProfile(data); } catch (error) { fail(400,error.message); }
     const name = text(data.name,80);
     if (name.length < 2 || /[\x00-\x1f]/.test(name)) fail(400,'Informe seu nome completo.');
+    await ensureRegionSchema(db);
     await db.batch([
       db.prepare('UPDATE users SET name=? WHERE id=?').bind(name,user.id),
       db.prepare(`INSERT INTO customer_profiles(user_id,phone,address,payment_preference) VALUES (?,?,?,?)
         ON CONFLICT(user_id) DO UPDATE SET phone=excluded.phone,address=excluded.address,payment_preference=excluded.payment_preference,updated_at=unixepoch()`)
         .bind(user.id,profile.phone,profile.address,profile.payment_preference),
+      db.prepare(`INSERT INTO customer_regions(user_id,region_id) VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET region_id=excluded.region_id,updated_at=unixepoch()`)
+        .bind(user.id,profile.region_id),
     ]);
     return json({ok:true});
   }

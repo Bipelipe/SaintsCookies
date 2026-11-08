@@ -25,5 +25,8 @@ writeFileSync('docs/D1-ATUALIZACAO-0003.sql',forConsole(history+checkoutHistory+
 const shipping=readFileSync('migrations/0004_checkout_fulfillment.sql','utf8');
 const shippingHistory="\nINSERT OR IGNORE INTO d1_migrations (name) VALUES ('0004_checkout_fulfillment.sql');\n";
 writeFileSync('docs/D1-ATUALIZACAO-0004.sql',forConsole(history+shipping+shippingHistory));
-writeFileSync('docs/D1-INICIAL.sql', forConsole(schema + history + checkout + checkoutHistory + roles + rolesHistory + shipping + shippingHistory));
+const regions=readFileSync('migrations/0005_customer_regions.sql','utf8');
+const regionsHistory="\nINSERT OR IGNORE INTO d1_migrations (name) VALUES ('0005_customer_regions.sql');\n";
+writeFileSync('docs/D1-ATUALIZACAO-0005.sql',forConsole(history+regions+regionsHistory));
+writeFileSync('docs/D1-INICIAL.sql', forConsole(schema + history + checkout + checkoutHistory + roles + rolesHistory + shipping + shippingHistory + regions + regionsHistory));
 console.log('SQL inicial para o Console D1 preparado.');

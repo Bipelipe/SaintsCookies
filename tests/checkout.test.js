@@ -4,7 +4,7 @@ import { priceCart, acceptCheckout, listCheckouts } from '../worker/checkout.js'
 import { validateProfile, profileFor } from '../worker/profile.js';
 import { testDatabase } from './helpers/d1.js';
 
-const profile = {phone:'(11) 99999-9999',address:'Rua de Teste, 123, São Paulo, SP',payment_preference:'pix'};
+const profile = {phone:'(11) 99999-9999',address:'Rua de Teste, 123, São Paulo, SP',payment_preference:'pix',region_id:'plano-piloto'};
 async function customer(db,id='customer') {
   await db.prepare('INSERT INTO users(id,name,email,password_hash) VALUES (?,?,?,?)').bind(id,'Cliente de teste',`${id}@example.test`,'not-a-password').run();
   await db.prepare('INSERT INTO customer_profiles(user_id,phone,address,payment_preference) VALUES (?,?,?,?)').bind(id,'5511999999999',profile.address,'pix').run();

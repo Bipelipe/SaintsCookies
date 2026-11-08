@@ -67,6 +67,7 @@ export async function acceptCheckout(db,env,user,data) {
   const quote=shippingQuote(fulfillment);
   if (!quote) reject(400,'Escolha uma região administrativa do Distrito Federal.');
   if (fulfillment.method==='delivery' && fulfillment.confirmed_address!==profile.address) reject(400,'Seu endereço foi atualizado. Confira e confirme novamente antes de concluir.');
+  if (fulfillment.method==='delivery' && profile.region_id && fulfillment.region_id!==profile.region_id) reject(400,'Sua região administrativa foi atualizada. Confira o endereço e o frete novamente antes de concluir.');
   if (fulfillment.method==='delivery' && fulfillment.expected_shipping_cents!==quote.fee_cents) reject(400,'O frete foi atualizado. Recarregue a página e confira o total.');
   const amount_cents=products_cents+quote.fee_cents;
   if (amount_cents>1000000) reject(400,'O total do pedido com frete deve ser de até R$ 10.000.');

@@ -40,7 +40,7 @@ function renderProducts() {
 function renderBag() {
   const selected = products.filter(p => bag[p.id]);
   $('#bag-items').innerHTML = selected.length ? selected.map(p => `<article class="bag-item"><img src="${imageRoot}${p.thumbnail || p.image}" alt=""><div><h3>${p.name}</h3><p>${productUnit(p)}</p><p>${money(p.price)} por ${p.saleUnit}</p><div class="quantity"><button data-quantity="${p.id}" data-change="-1" aria-label="Remover ${p.saleUnit==='pote'?'um pote':'uma unidade'} de ${p.name}">−</button><span>${bag[p.id]}</span><button data-quantity="${p.id}" data-change="1" aria-label="Adicionar ${p.saleUnit==='pote'?'um pote':'uma unidade'} de ${p.name}" ${bag[p.id] >= 99 ? 'disabled' : ''}>+</button></div></div><strong>${money(p.price * bag[p.id])}</strong></article>`).join('') : '<div class="empty-bag"><span>♡</span><h3>Um espaço para coisas gostosas.</h3><p>Seus sabores favoritos estão esperando por você.</p><button class="button button-primary" id="browse-cookies">Explorar os sabores <svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></button></div>';
-  $('#bag-summary').innerHTML = selected.length ? `${shippingSummary(Math.round(total(bag)*100))}<p class="checkout-note">Feche sua encomenda com sua conta Saints’. Nesta prévia, os pedidos são de teste, com retirada ou entrega e pagamento a combinar.</p><a class="button button-primary checkout-button" id="checkout-link" href="./conta.html?checkout=1">Fechar pedido</a><button class="button button-outline checkout-button" id="copy-order">Copiar minha seleção <span><svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></span></button><a class="instagram-checkout" href="https://www.instagram.com/saintscookies/" target="_blank" rel="noopener noreferrer">Enviar pelo Instagram <svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></a><p class="checkout-note">Copie a seleção e cole em uma mensagem no Instagram.</p><textarea class="order-fallback" id="order-fallback" aria-label="Seleção para copiar manualmente" readonly hidden></textarea>` : '';
+  $('#bag-summary').innerHTML = selected.length ? `${shippingSummary(Math.round(total(bag)*100),fulfillmentChoice(accountLoading?undefined:bagAccount))}<p class="checkout-note">Feche sua encomenda com sua conta Saints’. Nesta prévia, os pedidos são de teste, com retirada ou entrega e pagamento a combinar.</p><a class="button button-primary checkout-button" id="checkout-link" href="./conta.html?checkout=1">Fechar pedido</a><button class="button button-outline checkout-button" id="copy-order">Copiar minha seleção <span><svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></span></button><a class="instagram-checkout" href="https://www.instagram.com/saintscookies/" target="_blank" rel="noopener noreferrer">Enviar pelo Instagram <svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></a><p class="checkout-note">Copie a seleção e cole em uma mensagem no Instagram.</p><textarea class="order-fallback" id="order-fallback" aria-label="Seleção para copiar manualmente" readonly hidden></textarea>` : '';
   renderBagFulfillment();
 }
 function renderBagFulfillment() {
@@ -52,13 +52,13 @@ function renderBagFulfillment() {
     const active=button.dataset.bagTab===bagTab;
     button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;
   });
-  if(hasItems) mountFulfillment($('#bag-fulfillment'),{account:bagAccount,loading:accountLoading,onChange:renderBag});
+  if(hasItems) mountFulfillment($('#bag-fulfillment'),{account:accountLoading?undefined:bagAccount,loading:accountLoading,onChange:renderBag});
 }
 async function loadBagAccount() {
   const request=++accountRequest;accountLoading=true;renderBagFulfillment();
   try {const account=await api('/account');if(request===accountRequest) bagAccount=account;}
   catch(error) {if(request===accountRequest) {bagAccount=undefined;clearAddressConfirmation();}}
-  finally {if(request===accountRequest) {accountLoading=false;renderBagFulfillment();}}
+  finally {if(request===accountRequest) {accountLoading=false;renderBag();}}
 }
 function setDrawer(open) {
   if (open) previousFocus = document.activeElement;
@@ -107,7 +107,7 @@ document.addEventListener('click', async event => {
   }
   if (event.target.closest('#browse-cookies')) { setDrawer(false); $('#sabores').scrollIntoView({ behavior: 'smooth' }); }
   if (event.target.closest('#copy-order')) {
-    const choice=fulfillmentChoice(),quote=shippingQuote(choice);
+    const choice=fulfillmentChoice(bagAccount),quote=shippingQuote(choice);
     const details=choice.method==='delivery'?`\n\nReceber em casa${quote?` · ${quote.region.name}\nFrete de teste: ${money(quote.fee_cents/100)}\nTotal com frete: ${money(total(bag)+quote.fee_cents/100)}`:' · região e frete a confirmar'}`:'\n\nRetirar na loja · sem taxa de frete.';
     const text = orderText(bag)+details;
     try { await navigator.clipboard.writeText(text); notify('Seleção copiada! Cole na conversa com a Saints’.'); }

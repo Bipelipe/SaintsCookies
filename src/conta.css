@@ -42,6 +42,9 @@
 .profile-card summary { cursor:pointer; font-size:18px; padding:8px 0; }
 .field-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 20px; align-items:end; }
 .field-grid .full-field { grid-column:1/-1; }
+.address-region-fields { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); column-gap:16px; align-items:end; }
+.address-region-fields label,.address-region-fields select { min-width:0; }
+@media(max-width:600px) { .address-region-fields {grid-template-columns:1fr;} }
 .field-grid .button { margin:16px 0; }
 .checkout-card { scroll-margin-top:130px; }
 .checkout-card h2 { font-size:36px; margin:12px 0 24px; }

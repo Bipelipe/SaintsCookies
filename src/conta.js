@@ -9,6 +9,7 @@ import './admin.css';
 import './fulfillment.css';
 import { api } from './api.js';
 import { setupPhoneFields } from './phone.js';
+import { shippingRegions } from './shipping.js';
 import { clearAddressConfirmation } from './fulfillment.js';
 import { passwordPattern, passwordHelp } from './password-policy.js';
 import { renderCommerce, renderAdminCheckouts, setupCommerce } from './account-commerce.js';
@@ -99,6 +100,9 @@ document.addEventListener('submit', async event => {
   } catch (error) { feedback(error.message, true); if (error.status === 401) showAuth(); }
   finally { button.disabled = false; }
 });
+for (const select of document.querySelectorAll('[data-region-select]')) {
+  for (const region of [...shippingRegions].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'))) select.add(new Option(region.name,region.id));
+}
 setupPhoneFields();
 setupCommerce({ reload:load, feedback });
 load().catch(error => { showAuth(); feedback(error.message, true); });

@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 
 const origin='http://127.0.0.1:8788';
-const person=()=>({name:'Cliente de encomenda',email:`checkout-${randomUUID()}@example.test`,password:`Teste-${randomUUID()}`,phone:'11999999999',address:'Rua dos Testes, 123, Centro, São Paulo, SP',payment_preference:'pix'});
+const person=()=>({name:'Cliente de encomenda',email:`checkout-${randomUUID()}@example.test`,password:`Teste-${randomUUID()}`,phone:'11999999999',address:'Rua dos Testes, 123, Centro, São Paulo, SP',payment_preference:'pix',region_id:'plano-piloto'});
 async function client(playwright,admin=false) {
   const data=person(),api=await playwright.request.newContext({baseURL:origin,extraHTTPHeaders:{Origin:origin}});
   expect((await api.post('/api/auth/register',{data})).status()).toBe(200);
@@ -23,6 +23,7 @@ test('cart to account checkout: accepted receipt survives a lost response and ke
   await page.getByLabel('Telefone do WhatsApp',{exact:true}).fill(customer.phone);
   await page.getByLabel('Endereço completo',{exact:true}).fill(customer.address);
   await page.getByLabel('Pagamento preferido',{exact:true}).selectOption('pix');
+  await page.getByLabel('Região administrativa (RA)',{exact:true}).selectOption(customer.region_id);
   await page.getByLabel('E-mail',{exact:true}).fill(customer.email);
   await page.getByLabel('Senha',{exact:true}).fill(customer.password);
   await page.locator('#auth-submit').click();

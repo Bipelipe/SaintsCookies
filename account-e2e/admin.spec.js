@@ -3,7 +3,7 @@ import {execFileSync} from 'node:child_process';
 import {randomUUID} from 'node:crypto';
 
 const origin='http://127.0.0.1:8788';
-const identity=label=>({name:`Teste ${label}`,email:`${label}-${randomUUID()}@example.test`,password:`Teste-${randomUUID()}`,phone:'11999999999',address:'Rua dos Testes, 123, Centro, São Paulo, SP',payment_preference:'pix'});
+const identity=label=>({name:`Teste ${label}`,email:`${label}-${randomUUID()}@example.test`,password:`Teste-${randomUUID()}`,phone:'11999999999',address:'Rua dos Testes, 123, Centro, São Paulo, SP',payment_preference:'pix',region_id:'plano-piloto'});
 async function client(playwright,label,admin=false) {
   const person=identity(label),api=await playwright.request.newContext({baseURL:origin,extraHTTPHeaders:{Origin:origin}});
   expect((await api.post('/api/auth/register',{data:person})).status()).toBe(200);

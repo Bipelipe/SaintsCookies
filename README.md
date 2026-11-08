@@ -60,3 +60,5 @@ O telefone no cadastro e no perfil mostra o código do Brasil `+55` fixo e forma
 A sacola tem as abas **Produtos** e **Retirada ou entrega**. Retirar na loja não cobra frete nem exige confirmação de endereço. Receber em casa exige RA do DF e confirmação do endereço salvo; o cliente pode atualizar o cadastro antes de confirmar. O resumo, o comprovante e o painel discriminam produtos, frete e total.
 
 As 35 tarifas são **fictícias**, entre R$ 10 e R$ 25, e ficam centralizadas em `src/shipping.js` em centavos. Consulte [o guia de entregas](docs/ENTREGAS.md) para substituir pelos valores reais e entender a atualização aditiva do D1.
+
+A RA é selecionada junto ao endereço no cadastro e no perfil, sem valores de frete no campo. O cliente pode alterá-la em Meus dados. Para perfis com RA salva, a entrega usa a região automaticamente; a tarifa aparece apenas ao escolher entrega. A extensão aditiva `customer_regions` (0005) é inicializada automaticamente e não atribui uma RA arbitrária às contas antigas.

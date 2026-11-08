@@ -4,7 +4,7 @@
 
 O cliente escolhe os cookies, entra na conta, confere os dados e clica em **Confirmar e aceitar encomenda**. O servidor calcula os preços pelo catálogo, aceita a encomenda imediatamente e salva itens, valores, nome, telefone, endereço e pagamento preferido. O comprovante fica no clube, inclusive quando o WhatsApp falha.
 
-**Aceitar não é cobrar.** O pagamento fica pendente. A equipe confere o recebimento no painel e confirma o pagamento. Não há sistema de pontos ou brindes. O cadastro pede nome, e-mail, senha, telefone brasileiro com DDD, endereço completo e preferência entre Pix e dinheiro. Nenhum dado de cartão é coletado. Contas antigas mantêm o acesso; basta completar os dados em “Meus dados para encomendas”. O login continua usando e-mail e senha.
+**Aceitar não é cobrar.** O pagamento fica pendente. A equipe confere o recebimento no painel e confirma o pagamento. Não há sistema de pontos ou brindes. O cadastro pede nome, e-mail, senha, telefone brasileiro com DDD, endereço completo, região administrativa do DF e preferência entre Pix e dinheiro. Nenhum dado de cartão é coletado. Contas antigas mantêm o acesso; basta completar os dados em “Meus dados para encomendas”. O login continua usando e-mail e senha.
 
 Nesta implementação de teste, o cliente escolhe **retirada na loja** ou **entrega em casa**. A entrega usa tarifas fictícias por RA do DF e exige confirmação do endereço cadastrado; o total inclui produtos e frete. Consulte [ENTREGAS.md](ENTREGAS.md). Os valores reais, disponibilidade e horários ainda devem ser definidos pela loja.
 

@@ -11,7 +11,7 @@ for (const incremental of [false,true]) test(`console ${incremental ? 'upgrade' 
     const pasted=readFileSync(`docs/${filename}`,'utf8').replace(/[\r\n]+/g,' ');
     db.exec(pasted);db.exec(pasted);
     assert.equal(db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name IN ('customer_profiles','checkout_orders','checkout_items','whatsapp_outbox')").get().n,4);
-    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM d1_migrations').get().n,incremental ? 2 : 4);
+    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM d1_migrations').get().n,incremental ? 2 : 5);
   } finally {db.close();}
 });
 
